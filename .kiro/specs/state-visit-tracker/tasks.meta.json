@@ -1,0 +1,1300 @@
+{
+  "pbtResults": {
+    "4.2 Write property test for credential validation": {
+      "status": "passed",
+      "lastRunTimestamp": 1787520507806
+    },
+    "7.2 Write property test for the Authorization header on every request": {
+      "status": "passed",
+      "lastRunTimestamp": 1787521378129
+    },
+    "4.4 Write property test for failed/unreachable login never creating a session": {
+      "status": "passed",
+      "lastRunTimestamp": 1787521468451
+    },
+    "15.3 Write property test for the neutral placeholder": {
+      "status": "passed",
+      "lastRunTimestamp": 1787522596769
+    },
+    "5.2 Write property test for login-success discarding prior visited-state data": {
+      "status": "passed",
+      "lastRunTimestamp": 1787523335412
+    },
+    "10.5 Write property test for region hit-testing": {
+      "status": "passed",
+      "lastRunTimestamp": 1787523555912
+    },
+    "5.4 Write property test for logout clearing session and visited-state data": {
+      "status": "passed",
+      "lastRunTimestamp": 1787573095032
+    },
+    "5.6 Write property test for expired access token blocking the call and clearing the session": {
+      "status": "passed",
+      "lastRunTimestamp": 1787576081200
+    },
+    "8.5 Write property test for guest initialization never calling the API and preserving local marks": {
+      "status": "passed",
+      "lastRunTimestamp": 1787576161835
+    },
+    "5.7 Write property test for an authentication-error response clearing the session": {
+      "status": "passed",
+      "lastRunTimestamp": 1787576350157
+    }
+  },
+  "executionHistory": {
+    "1.1 Initialize project scaffold and install dependencies": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308172
+      },
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518317780
+      },
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518711690
+      }
+    ],
+    "2.1 Create `config.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308338
+      },
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518715618
+      },
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519855223
+      },
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519913332
+      }
+    ],
+    "3.1 Create `sharedState.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308417
+      },
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518716373
+      },
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519855984
+      },
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519913973
+      }
+    ],
+    "4.1 Implement `validateCredentials(username, password)` in `authenticationService.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308497
+      },
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518717116
+      },
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519917786
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520130432
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520414168
+      }
+    ],
+    "4.2 Write property test for credential validation": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308552
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520418191
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520519637
+      }
+    ],
+    "4.3 Implement `login(username, password)` in `authenticationService.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308623
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520524221
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520668222
+      }
+    ],
+    "4.4 Write property test for failed/unreachable login never creating a session": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308672
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521301965
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521481232
+      }
+    ],
+    "5.1 Implement the login-success handler in `sessionHandlers.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308726
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521485929
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521567705
+      }
+    ],
+    "5.2 Write property test for login-success discarding prior visited-state data": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308783
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523275767
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523567724
+      }
+    ],
+    "5.3 Implement the logout handler in `sessionHandlers.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308838
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523572152
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571777118
+      }
+    ],
+    "5.4 Write property test for logout clearing session and visited-state data": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308894
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573044569
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573129943
+      }
+    ],
+    "5.5 Implement token-expiry and auth-error session-clearing in `sessionHandlers.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308949
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573135209
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573305006
+      }
+    ],
+    "5.6 Write property test for expired access token blocking the call and clearing the session": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518308997
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576031886
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576284170
+      }
+    ],
+    "5.7 Write property test for an authentication-error response clearing the session": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309050
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576289734
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576816200
+      }
+    ],
+    "5.8 Write unit test for the sign-out-reason wording distinction": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309108
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576820648
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576895753
+      }
+    ],
+    "6. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309201
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787581004024
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787581008053
+      }
+    ],
+    "7.1 Implement `listVisitedStates(session)` and `saveVisitedState(session, stateId, visited)` in `visitRecordApiClient.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309250
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520525248
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520668988
+      }
+    ],
+    "7.2 Write property test for the Authorization header on every request": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309308
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521302525
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521481926
+      }
+    ],
+    "7.3 Write property test for no request being sent when there is no session": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309362
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521486630
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521568510
+      }
+    ],
+    "7.4 Write unit tests for timeout, failure, and auth-error classification": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309407
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521572352
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521819865
+      }
+    ],
+    "8.1 Implement the load-on-mount effect for an authenticated Map_View in `useVisitedStatesLoader.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309464
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521573260
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521820863
+      }
+    ],
+    "8.2 Implement the load-success handler in `useVisitedStatesLoader.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309524
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523572999
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571777830
+      }
+    ],
+    "8.3 Write property test for load-success replacing the store with exactly what the API returned": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309580
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573045637
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573130486
+      }
+    ],
+    "8.4 Implement the guest initialization path in `useVisitedStatesLoader.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309627
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573135753
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573305755
+      }
+    ],
+    "8.5 Write property test for guest initialization never calling the API and preserving local marks": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309682
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576032507
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576284943
+      }
+    ],
+    "8.6 Write unit tests for the 10-second load timeout and its retry control": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309746
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571782070
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571892304
+      }
+    ],
+    "9. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309806
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787581011818
+      }
+    ],
+    "10.1 Create the static boundary GeoJSON asset and the `Region` shape in `stateBoundaries.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309860
+      },
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518717994
+      },
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519918501
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520131293
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520414380
+      }
+    ],
+    "10.2 Write unit test verifying exactly 51 regions with no missing or duplicated boundary": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309915
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520419025
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520520412
+      }
+    ],
+    "10.3 Implement `useRegionsLoader()` in `stateBoundaries.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518309969
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520672980
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520965345
+      }
+    ],
+    "10.4 Implement `resolveRegionAtLatLng(latLng, regions)` in `stateBoundaries.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310027
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521824680
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521959665
+      }
+    ],
+    "10.5 Write property test for region hit-testing": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310081
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523276434
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523568532
+      }
+    ],
+    "11.1 Implement `resolveFillColor(stateId, visitedStateIds)` in `resolveFillColor.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310131
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520673712
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520966888
+      }
+    ],
+    "11.2 Write property test for fill color": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310209
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521825146
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521960281
+      }
+    ],
+    "12.1 Implement `useGoogleMapsLoader()` in `useGoogleMapsLoader.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310299
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520977298
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521077133
+      }
+    ],
+    "12.2 Implement `MapView`/`GoogleMapCanvas`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310371
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521963978
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522265899
+      }
+    ],
+    "12.3 Write unit tests for loading/error/retry UI": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310448
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571897136
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787572464548
+      }
+    ],
+    "12.4 Write unit test for the fixed initial viewport": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310515
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571897951
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787572465178
+      }
+    ],
+    "12.5 Implement `StateBoundaryOverlay`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310573
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787572469547
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787572782802
+      }
+    ],
+    "12.6 Write smoke tests confirming the Maps script loads and both a map and the region overlay are constructed": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310662
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787575797930
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787575894564
+      }
+    ],
+    "12.7 Write unit test for color-update timing after a visited-status change": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310720
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787575895348
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576027191
+      }
+    ],
+    "13. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310764
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787581015437
+      }
+    ],
+    "14.1 Implement `handleStateBoundaryClick(session, visitedStateIds, pendingStateIds, stateId, apiClient)` in `handleStateBoundaryClick.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310830
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787520978154
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521077988
+      }
+    ],
+    "14.2 Write property test for the authenticated toggle": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310881
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521964680
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522265170
+      }
+    ],
+    "14.3 Write property test for reverting on a failed or timed-out save": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310935
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522269426
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522350110
+      }
+    ],
+    "14.4 Write property test for repeated clicks on a pending state": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518310982
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522269968
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522493286
+      }
+    ],
+    "14.5 Write property test for the unauthenticated toggle": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311039
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522498235
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522605740
+      }
+    ],
+    "14.6 Wire `handleStateBoundaryClick` into `StateBoundaryOverlay`'s click listener": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311094
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573310540
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787575792863
+      }
+    ],
+    "15.1 Implement `computeInfoPanelContent(infoPanelStateId, regionsById, visitedStateIds)` in `computeInfoPanelContent.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311157
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521081764
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521146292
+      }
+    ],
+    "15.2 Write property test for the targeted region's name and visited status": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311205
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522355564
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522494194
+      }
+    ],
+    "15.3 Write property test for the neutral placeholder": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311260
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522498706
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522604961
+      }
+    ],
+    "15.4 Write property test for reflecting visited-status changes without re-targeting": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311318
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522610433
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522705864
+      }
+    ],
+    "15.5 Implement `StateInfoPanel`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311370
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522615485
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523160717
+      }
+    ],
+    "15.6 Write property test for hover-incapable devices": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311426
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787572470625
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787572959898
+      }
+    ],
+    "15.7 Write unit test for the fixed (non-tooltip) positioning of the State_Info_Panel": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311506
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787572471294
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573020547
+      }
+    ],
+    "16. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311568
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787581018944
+      }
+    ],
+    "17.1 Implement `shouldShowLoginPrompt(session)` in `shouldShowLoginPrompt.js`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311615
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521082645
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521147088
+      }
+    ],
+    "17.2 Write property test for the login prompt's visibility": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311676
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522611188
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787522705226
+      }
+    ],
+    "17.3 Implement `LoginPromptBanner`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311727
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576290220
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576816437
+      }
+    ],
+    "17.4 Write integration test for guest local marks persisting across a re-render": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311785
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576900284
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787577275161
+      }
+    ],
+    "18.1 Implement `LoginForm`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311839
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521150287
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521297662
+      }
+    ],
+    "18.2 Implement `LoginPage`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311894
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571782876
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787571893052
+      }
+    ],
+    "18.3 Write unit tests for Login_Page behavior": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518311949
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573311175
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787575793538
+      }
+    ],
+    "19.1 Implement `AuthGate` and `MapPage`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518312005
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576900931
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787577275479
+      }
+    ],
+    "19.2 Implement `App`": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518312058
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787577279684
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787580326171
+      }
+    ],
+    "19.3 Write integration test for login followed by the Requirement 4 load": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518312115
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787580335699
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787580994532
+      }
+    ],
+    "20. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518312173
+      },
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787581039034
+      }
+    ],
+    "1. Set up project structure and dependencies": [
+      {
+        "executionId": "f67c898d-7e14-4019-be74-b5e6e6155587",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787518711854
+      }
+    ],
+    "2. Implement the configuration module": [
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519913438
+      }
+    ],
+    "3. Implement the shared state module": [
+      {
+        "executionId": "e221bfaa-e369-4656-9697-3c5df9d10417",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787519914049
+      }
+    ],
+    "4. Implement credential validation and login against Cognito": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521481338
+      }
+    ],
+    "7. Implement the Visit_Record_API client": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521819972
+      }
+    ],
+    "11. Implement fill-color derivation": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787521960348
+      }
+    ],
+    "10. Implement region boundary data and hit-testing": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787523568598
+      }
+    ],
+    "15. Implement the State_Info_Panel": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787573020620
+      }
+    ],
+    "14. Implement the mark/unmark toggle handler": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787575792941
+      }
+    ],
+    "18. Implement the Login_Page and Login_Form": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787575793603
+      }
+    ],
+    "12. Implement Google Map rendering": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576027263
+      }
+    ],
+    "8. Implement the visited-states loading flow": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576285042
+      }
+    ],
+    "5. Implement session lifecycle handlers": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787576895849
+      }
+    ],
+    "17. Implement the login prompt banner": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787577275234
+      }
+    ],
+    "19. Wire up top-level application components": [
+      {
+        "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
+        "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
+        "timestamp": 1787580994645
+      }
+    ]
+  }
+}
