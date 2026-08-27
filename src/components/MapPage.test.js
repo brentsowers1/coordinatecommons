@@ -7,7 +7,6 @@
 // (`MapPage --> MapView`, `MapPage --> LoginPromptBanner`) and wires the
 // login control correctly (Requirement 1.1/1.2).
 
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 jest.mock('./MapView', () => ({

@@ -1,4 +1,3 @@
-import React from 'react';
 import { render } from '@testing-library/react';
 
 import { GoogleMapCanvas, INITIAL_MAP_CENTER, INITIAL_MAP_ZOOM } from './GoogleMapCanvas';

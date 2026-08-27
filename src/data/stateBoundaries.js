@@ -120,7 +120,7 @@ export function useRegionsLoader() {
           setRegions(parsedRegions);
           setStatus('ready');
         }
-      } catch (error) {
+      } catch {
         if (!cancelled) {
           setRegions([]);
           setStatus('error');

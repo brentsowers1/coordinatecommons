@@ -78,7 +78,7 @@ async function performRequest(session, init, url) {
 
   try {
     return await response.json();
-  } catch (error) {
+  } catch {
     throw { kind: 'FAILURE' };
   }
 }

@@ -133,7 +133,6 @@ export function useVisitedStatesLoader(session) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, attempt]);
 
   const retry = React.useCallback(() => {

@@ -53,7 +53,7 @@ describe('handleLogout', () => {
   // Feature: state-visit-tracker, Property 4: Logout always clears session and visited-state data
   test('property: always yields session === null and visitedStateIds === {}, regardless of any prior Session or prior visitedStateIds', () => {
     fc.assert(
-      fc.property(priorSessionArb, priorVisitedStateIdsArb, (priorSession, priorVisitedStateIds) => {
+      fc.property(priorSessionArb, priorVisitedStateIdsArb, (_priorSession, _priorVisitedStateIds) => {
         // priorSession and priorVisitedStateIds are generated to
         // demonstrate the property holds "for any prior Session (including
         // null) and any prior visitedStateIds map", but are intentionally
@@ -117,7 +117,7 @@ describe('handleApiAuthError', () => {
   // Feature: state-visit-tracker, Property 6: An authentication-error response always clears the session
   test('property: always clears the session and visitedStateIds, regardless of which operation (list/save) produced the AUTH_ERROR', () => {
     fc.assert(
-      fc.property(sourceOperationArb, (sourceOperation) => {
+      fc.property(sourceOperationArb, (_sourceOperation) => {
         // sourceOperation is generated to demonstrate the property holds
         // "regardless of which operation (list/save) produced it", but is
         // intentionally not passed to handleApiAuthError since it takes no

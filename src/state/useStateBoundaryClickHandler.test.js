@@ -14,7 +14,7 @@ import { useSession, useVisitedStateIds, usePendingStateIds, useToastError } fro
 
 function Harness({ apiClient }) {
   const onStateBoundaryClick = useStateBoundaryClickHandler(apiClient);
-  const [session, setSession] = useSession();
+  const [, setSession] = useSession();
   const [visitedStateIds] = useVisitedStateIds();
   const [pendingStateIds] = usePendingStateIds();
   const [toastError] = useToastError();

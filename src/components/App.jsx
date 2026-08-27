@@ -31,7 +31,6 @@
 // describing where in the tree the shared-state module comes into effect
 // (the root), not a runtime action `App` must additionally perform.
 
-import React from 'react';
 import { AuthGate } from './AuthGate';
 
 export function App() {

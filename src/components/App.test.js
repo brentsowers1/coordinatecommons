@@ -3,7 +3,6 @@
 // AuthGate is mocked so this test only confirms App renders it -- AuthGate's
 // own behavior is already covered by AuthGate.test.js.
 
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 jest.mock('./AuthGate', () => ({

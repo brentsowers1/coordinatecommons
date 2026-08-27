@@ -28,7 +28,6 @@
 // see that hook's comment in sharedState.js. This component simply reads
 // whatever is currently there.
 
-import React from 'react';
 import { useSession, useSignOutReason } from '../state/sharedState';
 import { shouldShowLoginPrompt } from './shouldShowLoginPrompt';
 

@@ -36,7 +36,6 @@
 // signed in, rather than duplicating a `useSession` read here that would
 // otherwise need to match `LoginPromptBanner`'s own logic.
 
-import React from 'react';
 import { MapView } from './MapView';
 import { LoginPromptBanner } from './LoginPromptBanner';
 

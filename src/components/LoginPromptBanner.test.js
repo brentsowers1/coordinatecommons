@@ -13,6 +13,7 @@ describe('LoginPromptBanner', () => {
     React.useEffect(() => {
       setSession(session);
       setSignOutReason(signOutReason);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return null;
   }
