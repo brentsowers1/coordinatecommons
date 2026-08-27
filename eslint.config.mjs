@@ -136,6 +136,41 @@ export default [
     },
   },
 
+  // playwright.config.js runs under Node (CommonJS, matching
+  // `"type": "commonjs"` -- see the file's own header comment for why it
+  // doesn't need the `.mjs`/`.cjs` treatment vite.config.mjs/
+  // eslint.config.mjs needed).
+  {
+    files: ['playwright.config.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
+  // e2e/**: Playwright's own end-to-end test suite (distinct from the
+  // Jest suite in src/**/*.test.js -- see playwright.config.js/
+  // e2e/mapLoads.spec.js's header comments). These files run under Node
+  // via the Playwright test runner, not in a browser themselves (they
+  // remote-control a real browser via `page`), so they get Node globals
+  // rather than `globals.browser`, plus `@playwright/test`'s own
+  // `test`/`expect` are plain imports, not ambient globals, so no
+  // additional test-framework globals are needed the way Jest's
+  // `describe`/`it`/`expect` needed `globals.jest` above.
+  {
+    files: ['e2e/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   {
     rules: {
       // This codebase documents prop shapes with JSDoc comments (see e.g.

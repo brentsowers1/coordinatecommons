@@ -2,3 +2,14 @@ node_modules
 dist
 .env
 .env.local
+# Covers any mode-specific local env file (Vite's own convention), e.g.
+# `.env.development.local` -- the unrestricted, localhost-friendly Google
+# Maps API key shared by `npm run dev` and the Playwright e2e suite (see
+# playwright.config.js) -- as well as `.env.production.local`, etc.
+.env.*.local
+
+# Playwright end-to-end test artifacts (e2e/, playwright.config.js). The
+# browser binaries themselves install outside the repo (in Playwright's own
+# cache, e.g. %LOCALAPPDATA%\ms-playwright on Windows), not here.
+test-results/
+playwright-report/
