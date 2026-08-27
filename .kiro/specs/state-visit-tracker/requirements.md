@@ -5,7 +5,7 @@
 This feature is the front-end for a browser-based React web application called the Coordinate_Commons. The application displays a Google Map with an overlay of the boundaries of the 50 US states and Washington D.C. (51 regions in total). The Map_View and the click-to-mark interaction are available to both authenticated and unauthenticated visitors: any visitor can view the map and click a state boundary to mark it as visited (and click again to unmark it). However, only an authenticated user's visited-state marks are persisted, by calling an existing AWS API Gateway endpoint backed by existing AWS Lambda functions (the Visit_Record_API); building or modifying that backend is out of scope for this spec. An unauthenticated user's marks exist only in the browser session and are not sent to the Visit_Record_API; Coordinate_Commons displays a prompt below the Map_View telling unauthenticated users that they need to log in to save their visited states. Users authenticate through a login page that collects a username and password and validates them against an existing AWS Cognito user pool; self-service sign-up and password reset are out of scope unless a future spec adds them. The application uses the `make-shared-state-hook` library for state that must be shared across components (for example, session state and the set of visited states).
 
 **Assumptions** (to be confirmed during design if incorrect):
-- The Visit_Record_API associates visited-state records with the signed-in user based on the Cognito access token sent with each request.
+- The Visit_Record_API associates visited-state records with the signed-in user based on the Cognito ID token sent with each request.
 - Clicking an already-visited state is intended to unmark it (toggle behavior), since the alternative (no way to undo an accidental click) would leave users unable to correct mistakes.
 - "The 50 US states" refers to the standard 50 states. Washington D.C. is in scope as an additional trackable region alongside the 50 US states; US territories remain out of scope unless the user indicates otherwise.
 
@@ -17,7 +17,7 @@ This feature is the front-end for a browser-based React web application called t
 - **Coordinate_Commons**: The React single-page web application, named Coordinate Commons, described in this document.
 - **Login_Page**: The page presented to a visitor for entering a username and password.
 - **Authentication_Service**: The integration layer within Coordinate_Commons that authenticates a user against the existing AWS Cognito user pool.
-- **Session**: The authenticated user's active login state within Coordinate_Commons, including the Cognito-issued access token.
+- **Session**: The authenticated user's active login state within Coordinate_Commons, including the Cognito-issued ID token.
 - **Map_View**: The primary view of Coordinate_Commons that renders the Google Map together with the State_Boundary overlay.
 - **State_Boundary**: A polygon overlaid on Map_View representing the geographic boundary of one of the 50 US states or Washington D.C.
 - **State_Info_Panel**: A fixed area positioned below the Map_View (not a tooltip that follows the mouse pointer) that displays the name and visited status of the State_Boundary currently under the user's mouse pointer.
@@ -51,7 +51,7 @@ This feature is the front-end for a browser-based React web application called t
 #### Acceptance Criteria
 
 1. WHEN a signed-in user selects a logout control, THE Coordinate_Commons SHALL clear the Session and the Visited_State records from the Shared_State_Store, and SHALL display the Map_View.
-2. IF the Cognito access token stored in the Session has expired at the time the Coordinate_Commons attempts to call the Visit_Record_API, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and SHALL display the Map_View instead of completing that call.
+2. IF the Cognito ID token stored in the Session has expired at the time the Coordinate_Commons attempts to call the Visit_Record_API, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and SHALL display the Map_View instead of completing that call.
 3. IF a call to the Visit_Record_API returns an authentication error, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and SHALL display the Map_View.
 4. WHEN THE Coordinate_Commons clears the Session due to logout, token expiration, or an authentication error from the Visit_Record_API, THE Coordinate_Commons SHALL display the login-prompt message described in Requirement 9 below the Map_View, and, for token expiration or an authentication error specifically, SHALL indicate that the user was signed out because their session ended.
 
@@ -111,9 +111,9 @@ This feature is the front-end for a browser-based React web application called t
 
 #### Acceptance Criteria
 
-1. THE Coordinate_Commons SHALL include the signed-in user's Cognito access token from the Session in the Authorization header of every request it sends to the Visit_Record_API.
+1. THE Coordinate_Commons SHALL include the signed-in user's Cognito ID token from the Session in the Authorization header of every request it sends to the Visit_Record_API.
 2. WHILE the Shared_State_Store contains no Session, THE Coordinate_Commons SHALL NOT send any request to the Visit_Record_API.
-3. IF the Visit_Record_API rejects a request due to a missing, invalid, or expired access token, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and display the Map_View.
+3. IF the Visit_Record_API rejects a request due to a missing, invalid, or expired ID token, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and display the Map_View.
 
 ### Requirement 8: Technical Constraints
 

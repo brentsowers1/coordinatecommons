@@ -59,7 +59,7 @@ graph LR
 
     LoginForm -- credentials --> AuthenticationService
     AuthenticationService -- Cognito tokens --> useSession
-    useSession -- access token --> VisitRecordApiClient
+    useSession -- ID token --> VisitRecordApiClient
     VisitRecordApiClient -- GET/POST --> VisitRecordAPI[("Visit_Record_API\n(existing API Gateway + Lambda)")]
     VisitRecordApiClient -- visited state ids --> useVisitedStateIds
     StateBoundaryOverlay -- reads --> useVisitedStateIds
@@ -143,7 +143,7 @@ export const useToastError = makeSharedStateHook(React, null);
 ```javascript
 {
   username: string,
-  accessToken: string,   // Cognito access token (JWT)
+  accessToken: string,   // Cognito ID token (JWT)
   expiresAt: number,     // epoch ms; derived from Cognito's expires_in at sign-in time
 }
 ```
@@ -352,7 +352,7 @@ For any prior `Session` (including null) and any prior `visitedStateIds` map, ap
 
 **Validates: Requirements 2.1**
 
-### Property 5: An expired access token blocks the API call and clears the session
+### Property 5: An expired ID token blocks the API call and clears the session
 
 For any `Session` whose `expiresAt` is before the current time, attempting any Visit_Record_API operation never issues a network request, and always clears the Session.
 
@@ -412,7 +412,7 @@ For any `stateId` and any `visitedStateIds` map, `resolveFillColor(stateId, visi
 
 **Validates: Requirements 6.1, 6.3**
 
-### Property 15: Every Visit_Record_API request carries the session's access token as the Authorization header
+### Property 15: Every Visit_Record_API request carries the session's ID token as the Authorization header
 
 For any non-null `Session` and any of the two operations (list/save), the outgoing request's `Authorization` header always equals `session.accessToken`.
 
@@ -465,7 +465,7 @@ For any sequence of one or more clicked `stateId`s on a simulated touch-only dev
 | Visited-state list request returns auth error | Client throws `AUTH_ERROR` | Clear Session, show Map_View with login prompt ("session ended") | 2.3, 7.3 |
 | Visit-save request (marking or unmarking) fails or times out | Client throws `TIMEOUT`/`FAILURE` | Revert optimistic toggle, show transient save-error toast | 5.3 |
 | Visit-save request (marking or unmarking) returns auth error | Client throws `AUTH_ERROR` | Clear Session, show Map_View with login prompt ("session ended"); also revert the optimistic toggle since the write did not persist | 2.3, 7.3, 5.3 |
-| Access token expired before a call | `session.expiresAt < Date.now()` checked before every call | Clear Session, show Map_View with login prompt ("session ended"), skip the call entirely | 2.2 |
+| ID token expired before a call | `session.expiresAt < Date.now()` checked before every call | Clear Session, show Map_View with login prompt ("session ended"), skip the call entirely | 2.2 |
 | Click on a location with no containing region | `resolveRegionAtLatLng` returns `null` | No state-identification action taken | 3.6 |
 | Duplicate click while a request is pending | `stateId` present in `pendingStateIds` | Click ignored entirely (no state change, no request) | 5.4 |
 

@@ -53,8 +53,8 @@ This plan implements the Coordinate Commons front end in JavaScript/JSX (per des
   - [x] 5.5 Implement token-expiry and auth-error session-clearing in `sessionHandlers.js`
     - Check `session.expiresAt` before any Visit_Record_API call and skip the call if expired; clear the session on an `AUTH_ERROR` response from either operation; set a short-lived `signOutReason` (`'LOGOUT' | 'SESSION_ENDED'`) alongside every session clear
     - _Requirements: 2.2, 2.3, 2.4, 7.3_
-  - [x] 5.6 Write property test for expired access token blocking the call and clearing the session
-    - **Property 5: An expired access token blocks the API call and clears the session**
+  - [x] 5.6 Write property test for expired ID token blocking the call and clearing the session
+    - **Property 5: An expired ID token blocks the API call and clears the session**
     - **Validates: Requirements 2.2**
   - [x] 5.7 Write property test for an authentication-error response clearing the session
     - **Property 6: An authentication-error response always clears the session**
@@ -71,7 +71,7 @@ This plan implements the Coordinate Commons front end in JavaScript/JSX (per des
     - Build request URLs from `config.visitRecordApiBaseUrl`, appending `?placeType=us-state` for the GET (list) request only; attach `Authorization: <token>`; use `AbortController` for a 10-second timeout; classify `401`/`403` as `AUTH_ERROR`, other failures/timeouts as `TIMEOUT`/`FAILURE`; short-circuit with no `fetch` call when `session` is `null`; parse `placesVisited[].Id` into a `stateId` array for list, and send `{ placeId, placeType: 'us-state', visited }` for save
     - _Requirements: 7.1, 7.2, 7.3_
   - [x] 7.2 Write property test for the Authorization header on every request
-    - **Property 15: Every Visit_Record_API request carries the session's access token as the Authorization header**
+    - **Property 15: Every Visit_Record_API request carries the session's ID token as the Authorization header**
     - **Validates: Requirements 7.1**
   - [x] 7.3 Write property test for no request being sent when there is no session
     - **Property 16: No session means no request is ever sent**

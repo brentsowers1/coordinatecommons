@@ -189,4 +189,30 @@ describe('login', () => {
       { numRuns: 100 }
     );
   });
+
+  // Bug fix: the Visit_Record_API's Lambda authorizer validates Cognito's ID
+  // token, not the access token, so login() must resolve the Session's
+  // `accessToken` field from `session.getIdToken()`, not
+  // `session.getAccessToken()`.
+  test('resolves the Session accessToken field from the Cognito ID token, not the access token', async () => {
+    const fakeSession = {
+      getIdToken: () => ({
+        getJwtToken: () => 'fake-id-jwt',
+        getExpiration: () => 1700000000,
+      }),
+      getAccessToken: () => ({
+        getJwtToken: () => 'fake-access-jwt',
+        getExpiration: () => 1600000000,
+      }),
+    };
+    mockAuthBehavior = (callbacks) => {
+      callbacks.onSuccess(fakeSession);
+    };
+
+    const result = await login('someuser', 'somepassword');
+
+    expect(result.accessToken).toBe('fake-id-jwt');
+    expect(result.accessToken).not.toBe('fake-access-jwt');
+    expect(result.expiresAt).toBe(1700000000 * 1000);
+  });
 });

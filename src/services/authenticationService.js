@@ -130,13 +130,16 @@ export async function login(username, password) {
   const authenticationPromise = new Promise((resolve, reject) => {
     cognitoUser.authenticateUser(authenticationDetails, {
       onSuccess: (session) => {
-        const accessToken = session.getAccessToken();
+        // The Visit_Record_API's Lambda authorizer validates Cognito's ID
+        // token, not the access token, so the ID token is what gets stored
+        // in the Session's `accessToken` field (see Session shape below).
+        const idToken = session.getIdToken();
         resolve({
           username: username.trim(),
-          accessToken: accessToken.getJwtToken(),
+          accessToken: idToken.getJwtToken(),
           // Cognito's `exp` claim is in epoch seconds; convert to epoch ms
           // to match the Session shape's `expiresAt` (design.md).
-          expiresAt: accessToken.getExpiration() * 1000,
+          expiresAt: idToken.getExpiration() * 1000,
         });
       },
       onFailure: (err) => {
