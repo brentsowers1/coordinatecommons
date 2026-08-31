@@ -1,0 +1,84 @@
+// TopNav (design.md Component Tree: "AuthGate --> TopNav"; new top-level
+// navigation, always visible on every page).
+//
+// Renders three controls:
+//   - "Coordinate Commons" (home): always rendered, regardless of session
+//     state. Calls `onNavigateHome` when clicked -- `AuthGate` is the sole
+//     owner of the `showLoginPage` navigation-state boolean, so this
+//     control never touches that state directly; it just asks the parent
+//     to navigate home (`() => setShowLoginPage(false)`, per AuthGate.jsx).
+//   - "Log in": rendered only when there is no session. Calls
+//     `onRequestLogin` when clicked (`() => setShowLoginPage(true)`, per
+//     AuthGate.jsx). This replaces MapPage's former inline login control.
+//   - "Log out": rendered only when there IS a session. Unlike the other
+//     two controls, logout doesn't need a callback from the parent --
+//     `TopNav` reads `useSession`/`useVisitedStateIds`/`useSignOutReason`
+//     itself (matching LoginPromptBanner.jsx's own pattern of reading
+//     shared state directly), calls `handleLogout()` from
+//     `sessionHandlers.js`, and applies its full return value
+//     (`{ session, visitedStateIds, signOutReason }`) to those three
+//     setters directly.
+//
+// All three are `<a href="#">` anchors, not `<button>` elements -- this is
+// a deliberate, explicit choice (superseding this file's original
+// button-based reasoning): there are still no real distinct URLs in this
+// SPA (no router exists), so each `onClick` handler calls
+// `event.preventDefault()` first to stop the browser from jumping to the
+// top of the page / appending a bare `#` to the URL, then performs the
+// exact same navigation logic a `<button>` would have. Known tradeoff:
+// unlike a real anchor pointing at a real destination, an `href="#"` link
+// driven entirely by `preventDefault()` + JS does not support "open in new
+// tab", middle-click, or right-click-copy-link the way a user might
+// expect from a link -- accepted here because the visual/semantic "link"
+// look was explicitly requested over button semantics.
+
+import { useSession, useVisitedStateIds, useSignOutReason } from '../state/sharedState';
+import { handleLogout } from '../services/sessionHandlers';
+
+/**
+ * @param {Object} props
+ * @param {() => void} props.onNavigateHome - called when the "Coordinate
+ *   Commons" control is clicked.
+ * @param {() => void} props.onRequestLogin - called when the "Log in"
+ *   control is clicked (only rendered when there is no session).
+ */
+export function TopNav({ onNavigateHome, onRequestLogin }) {
+  const [session, setSession] = useSession();
+  const [, setVisitedStateIds] = useVisitedStateIds();
+  const [, setSignOutReason] = useSignOutReason();
+
+  function handleHomeClick(event) {
+    event.preventDefault();
+    onNavigateHome();
+  }
+
+  function handleLoginClick(event) {
+    event.preventDefault();
+    onRequestLogin();
+  }
+
+  function handleLogoutClick(event) {
+    event.preventDefault();
+    const result = handleLogout();
+    setSession(result.session);
+    setVisitedStateIds(result.visitedStateIds);
+    setSignOutReason(result.signOutReason);
+  }
+
+  return (
+    <nav aria-label="Main" data-testid="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <a href="#" onClick={handleHomeClick} data-testid="nav-home-link">
+        Coordinate Commons
+      </a>
+      {session ? (
+        <a href="#" onClick={handleLogoutClick} data-testid="nav-logout-link">
+          Log out
+        </a>
+      ) : (
+        <a href="#" onClick={handleLoginClick} data-testid="nav-login-link">
+          Log in
+        </a>
+      )}
+    </nav>
+  );
+}

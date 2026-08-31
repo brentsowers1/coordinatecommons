@@ -373,4 +373,47 @@ describe('MapView - smoke test: real Maps API objects constructed (task 12.6)', 
       expect(polygonConstructor).toHaveBeenCalledTimes(REGIONS_FIXTURE.features.length)
     );
   });
+
+  // Regression test: MapView must actually mount the real StateInfoPanel
+  // (design.md Component Tree: "MapView --> StateInfoPanel") once both
+  // loaders are ready, not just GoogleMapCanvas/StateBoundaryOverlay.
+  // StateInfoPanel is NOT mocked here -- the point is verifying the real
+  // wiring, matching how this describe block already mounts the real
+  // Maps API smoke-test objects rather than mocks.
+  it('renders the real StateInfoPanel once both loaders are ready', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(REGIONS_FIXTURE),
+    });
+
+    window.google = {
+      maps: {
+        Map: jest.fn().mockImplementation(function Map(element, options) {
+          this.element = element;
+          this.options = options;
+          this.addListener = jest.fn(() => ({ remove: jest.fn() }));
+        }),
+        Polygon: jest.fn().mockImplementation(function Polygon(options) {
+          this.options = options;
+          this.setMap = jest.fn();
+          this.setOptions = jest.fn();
+        }),
+        importLibrary: jest.fn().mockResolvedValue({}),
+      },
+    };
+
+    render(<MapView />);
+
+    const scriptTag = getMapScriptTag();
+    act(() => {
+      scriptTag.onload();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('google-map-canvas')).toBeInTheDocument());
+
+    // The real (unmocked) StateInfoPanel is mounted, and since no state is
+    // hovered/clicked yet, it shows its neutral placeholder test-id.
+    expect(screen.getByTestId('state-info-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('state-info-panel-placeholder')).toBeInTheDocument();
+  });
 });

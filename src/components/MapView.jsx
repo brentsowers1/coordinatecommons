@@ -3,17 +3,18 @@
 // lifecycle (loading, error, retry) and renders GoogleMapCanvas,
 // StateBoundaryOverlay, StateInfoPanel.").
 //
-// Scope note (task 12.2): this task implements only the combined
-// loading/error/retry UI and renders `GoogleMapCanvas` once both loaders
-// are ready. `StateBoundaryOverlay` (task 12.5) and `StateInfoPanel` (task
-// 15.5) are not implemented yet and are intentionally omitted here; a
-// later task adds them as additional children once both exist.
+// Renders the combined loading/error/retry UI while either the map script
+// or the region data is still loading/failed, and once both loaders are
+// ready, renders `GoogleMapCanvas`, `StateBoundaryOverlay` (once the map
+// instance exists), and `StateInfoPanel` as siblings inside the
+// `data-testid="map-view"` wrapper.
 
 import React from 'react';
 import { useGoogleMapsLoader } from './useGoogleMapsLoader';
 import { useRegionsLoader } from '../data/stateBoundaries';
 import { GoogleMapCanvas } from './GoogleMapCanvas';
 import { StateBoundaryOverlay } from './StateBoundaryOverlay';
+import { StateInfoPanel } from './StateInfoPanel';
 import { useStateBoundaryClickHandler } from '../state/useStateBoundaryClickHandler';
 import { useSession, useVisitedStateIds } from '../state/sharedState';
 import { useVisitedStatesLoader } from '../state/useVisitedStatesLoader';
@@ -144,6 +145,7 @@ export function MapView() {
           onStateBoundaryClick={onStateBoundaryClick}
         />
       ) : null}
+      <StateInfoPanel regions={regionsLoader.regions} />
       {/* Requirement 4.4/4.5: a failed visited-states load never blocks the
           map/overlay from rendering (they're already visible above); this
           is a small, additive inline error/retry affordance specific to

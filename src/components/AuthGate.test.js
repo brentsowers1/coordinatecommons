@@ -1,11 +1,14 @@
 // Smoke tests for AuthGate (task 19.1).
 //
-// MapPage and LoginPage are mocked so this test only exercises AuthGate's
-// own navigation-state logic (see AuthGate.js's module comment for the
-// design rationale): default-to-MapPage (Requirement 1.1), switching to
-// LoginPage when MapPage's login control is used (Requirement 1.2), and
-// automatically returning to MapPage once useSession becomes non-null
-// (Requirements 1.6/1.7).
+// MapPage, LoginPage, and TopNav are mocked so this test only exercises
+// AuthGate's own navigation-state logic (see AuthGate.js's module comment
+// for the design rationale): default-to-MapPage (Requirement 1.1),
+// switching to LoginPage when TopNav's "Log in" control is used
+// (Requirement 1.2), and automatically returning to MapPage once
+// useSession becomes non-null (Requirements 1.6/1.7). Mocking TopNav here
+// (rather than using the real component) is consistent with this file's
+// existing style of mocking MapPage/LoginPage -- TopNav's own behavior
+// (which control it shows, logout wiring) is covered by TopNav.test.js.
 //
 // Shared-state note: `useSession` holds its value at module scope, so it
 // persists across tests within this file. A `beforeEach` resets it via a
@@ -18,16 +21,19 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { useSession } from '../state/sharedState';
 
 jest.mock('./MapPage', () => ({
-  MapPage: ({ onRequestLogin }) => (
-    <div data-testid="mock-map-page">
+  MapPage: () => <div data-testid="mock-map-page" />,
+}));
+jest.mock('./LoginPage', () => ({
+  LoginPage: () => <div data-testid="mock-login-page" />,
+}));
+jest.mock('./TopNav', () => ({
+  TopNav: ({ onRequestLogin }) => (
+    <div data-testid="mock-top-nav">
       <button type="button" onClick={onRequestLogin} data-testid="mock-login-control">
         Log in
       </button>
     </div>
   ),
-}));
-jest.mock('./LoginPage', () => ({
-  LoginPage: () => <div data-testid="mock-login-page" />,
 }));
 
 import { AuthGate } from './AuthGate';
@@ -66,6 +72,15 @@ describe('AuthGate', () => {
 
     expect(screen.getByTestId('mock-map-page')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-login-page')).not.toBeInTheDocument();
+  });
+
+  it('renders TopNav above both MapPage and LoginPage', () => {
+    render(<AuthGate />);
+    expect(screen.getByTestId('mock-top-nav')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('mock-login-control'));
+    expect(screen.getByTestId('mock-top-nav')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-login-page')).toBeInTheDocument();
   });
 
   it('renders LoginPage after the login control is used (Requirement 1.2)', () => {

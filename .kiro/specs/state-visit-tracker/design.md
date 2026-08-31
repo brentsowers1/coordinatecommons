@@ -27,6 +27,7 @@ The application is implemented in plain JavaScript (JSX), consistent with the `m
 ```mermaid
 graph TD
     App --> AuthGate
+    AuthGate --> TopNav
     AuthGate --> MapPage
     AuthGate --> LoginPage
     MapPage --> MapView
@@ -39,7 +40,8 @@ graph TD
 ```
 
 - **App**: Top-level component. Instantiates the shared-state hooks module and renders `AuthGate`.
-- **AuthGate**: Reads the shared `useSession` hook and chooses between `MapPage` (default, per Requirement 1.1) and `LoginPage`.
+- **AuthGate**: Reads the shared `useSession` hook and chooses between `MapPage` (default, per Requirement 1.1) and `LoginPage`; renders `TopNav` above whichever of the two is showing, so navigation is visible on every page.
+- **TopNav**: Always-visible top navigation. Provides a home control that returns to `MapPage`, a "Log in" control when there is no session (per Requirement 1.1/1.2), and a "Log out" control when there is a session (invoking the logout handler per Requirement 2.1).
 - **MapPage**: Composes `MapView` and, for unauthenticated sessions, `LoginPromptBanner` (Requirement 9.2/9.3).
 - **MapView**: Owns Google Maps lifecycle (loading, error, retry) and renders `GoogleMapCanvas`, `StateBoundaryOverlay`, `StateInfoPanel`.
 - **StateBoundaryOverlay**: Draws the 51 region polygons on the map and colors them from `useVisitedStateIds` (Requirement 6).

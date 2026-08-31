@@ -54,6 +54,7 @@ This feature is the front-end for a browser-based React web application called t
 2. IF the Cognito ID token stored in the Session has expired at the time the Coordinate_Commons attempts to call the Visit_Record_API, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and SHALL display the Map_View instead of completing that call.
 3. IF a call to the Visit_Record_API returns an authentication error, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and SHALL display the Map_View.
 4. WHEN THE Coordinate_Commons clears the Session due to logout, token expiration, or an authentication error from the Visit_Record_API, THE Coordinate_Commons SHALL display the login-prompt message described in Requirement 9 below the Map_View, and, for token expiration or an authentication error specifically, SHALL indicate that the user was signed out because their session ended.
+5. WHILE a user is authenticated, THE Coordinate_Commons SHALL display a control available to log out.
 
 ### Requirement 3: Map Rendering with State Boundaries
 

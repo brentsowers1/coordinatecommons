@@ -29,7 +29,7 @@
 //     gates rendering on auth state.
 
 import React from 'react';
-import { useInfoPanelStateId, useVisitedStateIds } from '../state/sharedState';
+import { useInfoPanelStateId, useVisitedStateIds, usePendingStateIds } from '../state/sharedState';
 import { computeInfoPanelContent } from './computeInfoPanelContent';
 
 /**
@@ -101,10 +101,31 @@ function buildRegionsById(regions) {
 export function StateInfoPanel({ regions = [] }) {
   const [infoPanelStateId] = useInfoPanelStateId();
   const [visitedStateIds] = useVisitedStateIds();
+  const [pendingStateIds] = usePendingStateIds();
 
   const regionsById = React.useMemo(() => buildRegionsById(regions), [regions]);
 
   const content = computeInfoPanelContent(infoPanelStateId, regionsById, visitedStateIds);
+
+  // "Saving..." indicator: surfaces the in-flight-save lifecycle that
+  // `usePendingStateIds`/`useStateBoundaryClickHandler` already track
+  // internally, but which nothing previously rendered -- so a user (or a
+  // test) had no way to distinguish "optimistically toggled, save still
+  // in flight" from "save confirmed" (design.md's "Toggle Sequence";
+  // Requirements 5.1/5.2). Only true when the CURRENTLY TARGETED state is
+  // itself pending; a save for some other, non-targeted state must not
+  // light this up.
+  //
+  // Implementation choice: a separate element with its own
+  // `data-testid="state-info-panel-saving"`, rather than appending text
+  // (e.g. " (saving...)") onto the existing content paragraph. This keeps
+  // `state-info-panel-content`'s text exactly
+  // `` `${name} — ${visited ? 'Visited' : 'Not visited'}` `` unchanged for
+  // every existing assertion (unit and e2e) that matches on that exact
+  // string, and lets both Jest and Playwright assert presence/absence of
+  // the indicator directly by test-id instead of doing fragile substring
+  // matching against a combined content string.
+  const isSaving = content.stateId != null && Object.prototype.hasOwnProperty.call(pendingStateIds, content.stateId);
 
   return (
     <div
@@ -125,6 +146,7 @@ export function StateInfoPanel({ regions = [] }) {
           {content.name} &mdash; {content.visited ? 'Visited' : 'Not visited'}
         </p>
       )}
+      {isSaving ? <p data-testid="state-info-panel-saving">Saving&hellip;</p> : null}
     </div>
   );
 }

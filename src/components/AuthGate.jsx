@@ -45,9 +45,19 @@
 // showing" (matching its name and its role in the Component Tree), while
 // MapPage/LoginPage themselves stay free of any navigation concept beyond
 // the callback props AuthGate hands them.
+//
+// TopNav: AuthGate also renders `TopNav`, above whichever of
+// MapPage/LoginPage it currently renders, so the nav is visible on every
+// page. TopNav is wired to the exact same `showLoginPage` state AuthGate
+// already owns -- `onNavigateHome={() => setShowLoginPage(false)}` (the
+// "Coordinate Commons" home control) and `onRequestLogin={() =>
+// setShowLoginPage(true)}` (the "Log in" control, replacing MapPage's
+// former inline login control). Logout itself needs no callback from
+// AuthGate -- TopNav handles it internally via `handleLogout()`.
 
 import React from 'react';
 import { useSession } from '../state/sharedState';
+import { TopNav } from './TopNav';
 import { MapPage } from './MapPage';
 import { LoginPage } from './LoginPage';
 
@@ -63,14 +73,13 @@ export function AuthGate() {
     }
   }, [session]);
 
-  if (showLoginPage) {
-    return <LoginPage />;
-  }
-
   return (
-    <MapPage
-      onRequestLogin={() => setShowLoginPage(true)}
-      showLoginControl={!session}
-    />
+    <>
+      <TopNav
+        onNavigateHome={() => setShowLoginPage(false)}
+        onRequestLogin={() => setShowLoginPage(true)}
+      />
+      {showLoginPage ? <LoginPage /> : <MapPage />}
+    </>
   );
 }

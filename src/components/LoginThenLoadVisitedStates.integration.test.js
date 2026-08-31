@@ -7,8 +7,9 @@
 // one layer in isolation (each of those layers already has its own
 // dedicated unit/property tests elsewhere):
 //
-//   AuthGate (session === null) -> MapPage -> MapView (guest: no visited
-//     states fetch) -> user clicks "Log in" -> LoginPage/LoginForm
+//   AuthGate (session === null) -> TopNav ("Log in" control) -> MapPage
+//     -> MapView (guest: no visited states fetch) -> user clicks "Log in"
+//     -> LoginPage/LoginForm
 //       -> authenticationService.login() (mocked) resolves a Session
 //         -> LoginPage's handleLoginSuccess sets useSession + clears
 //            useVisitedStateIds
@@ -30,7 +31,7 @@
 // login-mocking convention.
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 
 import { AuthGate } from './AuthGate';
 import { GOOGLE_MAPS_SCRIPT_ID } from './useGoogleMapsLoader';
@@ -189,9 +190,9 @@ describe('Login followed by the Requirement 4 load (integration)', () => {
       </>
     );
 
-    // Guest phase: session is null, so MapPage shows the "Log in" control
+    // Guest phase: session is null, so TopNav shows the "Log in" control
     // and MapView is rendering (guest path -- no /visit fetch yet).
-    expect(screen.getByTestId('login-control')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-login-link')).toBeInTheDocument();
     expect(screen.getByTestId('visited-state-ids-probe').textContent).toBe(JSON.stringify({}));
 
     // Get the map script rendered (task 12.2's loader) to 'ready' so
@@ -208,7 +209,7 @@ describe('Login followed by the Requirement 4 load (integration)', () => {
     await waitFor(() => expect(screen.getByTestId('map-view')).toBeInTheDocument());
 
     // Trigger the login control (Requirement 1.2).
-    fireEvent.click(screen.getByTestId('login-control'));
+    fireEvent.click(screen.getByTestId('nav-login-link'));
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
 
     // Mock a successful Cognito authentication.
@@ -224,7 +225,11 @@ describe('Login followed by the Requirement 4 load (integration)', () => {
     fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: 'correct-password' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+    // Scoped to the login form itself: TopNav also renders a "Log in"
+    // button (before the user is authenticated), so a page-wide query by
+    // accessible name would match both.
+    const loginForm = screen.getByLabelText(/username/i).closest('form');
+    fireEvent.click(within(loginForm).getByRole('button', { name: /log in/i }));
 
     // Requirements 1.6/1.7: successful authentication stores the Session,
     // discards prior visited-state data, and AuthGate returns to MapPage,
@@ -234,9 +239,12 @@ describe('Login followed by the Requirement 4 load (integration)', () => {
     // new MapView instance; the map script loader is already 'ready').
     await waitFor(() => expect(screen.getByTestId('map-view')).toBeInTheDocument());
 
-    // The login control disappears once signed in (AuthGate/MapPage hide
-    // it -- see MapPage.js), confirming we're actually past the login flow.
-    expect(screen.queryByTestId('login-control')).not.toBeInTheDocument();
+    // The login control disappears once signed in, replaced by the "Log
+    // out" control (TopNav hides one and shows the other based on
+    // useSession -- see TopNav.js), confirming we're actually past the
+    // login flow.
+    expect(screen.queryByTestId('nav-login-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('nav-logout-link')).toBeInTheDocument();
 
     // Requirement 1.6/1.7: the SHARED visited-state store ends up
     // containing exactly the stateIds the mocked Visit_Record_API
