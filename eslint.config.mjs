@@ -153,7 +153,7 @@ export default [
 
   // e2e/**: Playwright's own end-to-end test suite (distinct from the
   // Jest suite in src/**/*.test.js -- see playwright.config.js/
-  // e2e/mapLoads.spec.js's header comments). These files run under Node
+  // e2e/toggleVisitedStatePersists.spec.js's header comments). These files run under Node
   // via the Playwright test runner, not in a browser themselves (they
   // remote-control a real browser via `page`), so they get Node globals
   // rather than `globals.browser`, plus `@playwright/test`'s own

@@ -13,7 +13,7 @@
 // Chromium browser against the real `npm run build` output, served by
 // `vite preview`, making real network calls (including to the live
 // Google Maps JavaScript API using the project's real `.env` key -- see
-// `e2e/mapLoads.spec.js`'s own header comment).
+// `e2e/toggleVisitedStatePersists.spec.js`'s own header comment).
 //
 // Named `.js` (not `.mjs`/`.cjs`): `package.json` sets `"type":
 // "commonjs"`, and this file uses `require`/`module.exports`, so plain

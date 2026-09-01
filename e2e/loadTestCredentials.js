@@ -1,8 +1,7 @@
 // Loads real Cognito test-account credentials for the persistence e2e test
 // (toggleVisitedStatePersists.spec.js) from a local, gitignored file.
 //
-// Why this exists: `e2e/mapLoads.spec.js` doesn't need any credentials --
-// it never logs in. `toggleVisitedStatePersists.spec.js` does, and it must
+// Why this exists: `toggleVisitedStatePersists.spec.js` logs in and must
 // use a REAL Cognito user pool account (this suite makes real network
 // calls against the real backend, consistent with the rest of this e2e
 // suite -- see playwright.config.js's own header comment). Nobody involved

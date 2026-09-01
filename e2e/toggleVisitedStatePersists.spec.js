@@ -2,16 +2,36 @@
 // actually round-trip through the REAL Visit_Record_API and REAL Cognito
 // user pool?
 //
-// This is a different scenario from `e2e/mapLoads.spec.js` (which only
-// proves the map itself boots against the real Google Maps API). This
-// test additionally drives the real LoginForm against a real Cognito test
-// account, clicks a real state polygon to mark it visited, reloads the
-// page and logs in again to prove the mark was actually persisted server
-// side (not just an in-memory optimistic update), then repeats the same
-// proof for unmarking. None of this is mocked -- same philosophy as
-// mapLoads.spec.js: a mocked backend would just reintroduce the "passes
+// This file covers two things, not one: the very first `page.goto('/')` +
+// `waitForMapReady(page)` below also carries a `toHaveTitle` check --
+// together, the same "app loads, boots Google Maps, and renders no error
+// UI" smoke assertion that used to live in its own separate file/test
+// (formerly `e2e/mapLoads.spec.js`, since merged into this one). It's
+// folded into this test's own first navigation, rather than kept as its
+// own file with its own `page.goto`, specifically to share ONE initial
+// navigation across both concerns instead of paying for two separate
+// navigations (and two separate real Google Maps API loads) across two
+// files -- this suite makes real, non-mocked network calls, so minimizing
+// how many times it boots the real Maps API matters for run time and API
+// usage.
+//
+// Beyond that shared first navigation, this test additionally drives the
+// real LoginForm against a real Cognito test account, clicks a real state
+// polygon to mark it visited, reloads the page and logs in again to prove
+// the mark was actually persisted server side (not just an in-memory
+// optimistic update), then repeats the same proof for unmarking. None of
+// this is mocked -- a mocked backend would just reintroduce the "passes
 // without proving the real integration works" gap this suite exists to
 // close.
+//
+// At each of those mark/unmark/reload points, this test checks two
+// independent things, not just one: the State_Info_Panel's text AND the
+// actual rendered color of the real `google.maps.Polygon` overlay at that
+// point on the map (via `getPolygonFillColorAtPoint`, sampling real canvas
+// pixel data -- see that function's own comment for what was found when
+// investigating how Google actually renders that color in the DOM).
+// Checking only the info panel's text would miss a real bug where the
+// panel updates correctly but the polygon itself never repaints.
 //
 // Credentials: this test requires a real Cognito user pool account's
 // username/password, supplied via `e2e/.env.e2e-credentials.local` (see
@@ -43,6 +63,14 @@ const { loadTestCredentials } = require('./loadTestCredentials');
 const INITIAL_MAP_CENTER = { lat: 44, lng: -100 };
 const INITIAL_MAP_ZOOM = 3;
 
+// Duplicated from src/components/resolveFillColor.js's own
+// `VISITED_FILL_COLOR`/`NOT_VISITED_FILL_COLOR` exports, for the same
+// plain-Node-can't-`require`-an-ES-module reason documented immediately
+// above for `INITIAL_MAP_CENTER`/`INITIAL_MAP_ZOOM`. MUST stay in sync with
+// resolveFillColor.js's VISITED_FILL_COLOR/NOT_VISITED_FILL_COLOR.
+const VISITED_FILL_COLOR = '#2e7d32';
+const NOT_VISITED_FILL_COLOR = '#9e9e9e';
+
 // The target state for this test. Texas's centroid (roughly { lat: 31.0,
 // lng: -99.0 }) was chosen over e.g. Michigan/Florida/Hawaii specifically
 // because Texas is large and boxy enough that its centroid reliably falls
@@ -59,13 +87,13 @@ const INITIAL_MAP_ZOOM = 3;
 const TARGET_STATE_NAME = 'Texas';
 const TARGET_STATE_LAT_LNG = { lat: 31.0, lng: -99.0 };
 
-// This test performs two full login+map-ready cycles plus two page
+// This test performs three full login+map-ready cycles plus two page
 // reloads (each involving a real network round trip to Cognito and,
 // after each click, to the real Visit_Record_API), which comfortably
-// exceeds playwright.config.js's global 60s per-test timeout tuned for
-// mapLoads.spec.js's single, simpler load. Raised here, surgically, for
-// just this test file rather than raising the global config and affecting
-// mapLoads.spec.js too.
+// exceeds playwright.config.js's global 60s per-test default timeout.
+// Raised here, surgically, for just this test file via `test.setTimeout`
+// rather than raising that global default and affecting every other spec
+// file in the suite too.
 test.setTimeout(180_000);
 
 /**
@@ -118,9 +146,119 @@ async function getTargetStatePagePosition(page) {
 }
 
 /**
- * Waits for Map_View to reach its ready state -- same signals as
- * mapLoads.spec.js: no map-view-error, google-map-canvas visible, and its
- * real Maps-API-injected `.gm-style` child visible.
+ * Reads the actual rendered fill color of the `google.maps.Polygon`
+ * overlay at the given page coordinates, normalized to a lowercase
+ * `#rrggbb` hex string, or `null` if no such color could be read.
+ *
+ * How this actually works, confirmed empirically against the real running
+ * app (`google.maps.Polygon` does NOT render as an SVG `<path>` the way
+ * this project originally assumed -- there is no `fill` attribute, inline
+ * style, or SVG element of any kind anywhere in the DOM for it): this
+ * project's map tiles render to WebGL, and custom overlays (including
+ * `Polygon`) are painted onto that same per-tile `<canvas>` layer, not a
+ * separate SVG layer. So this reads the real painted pixel color directly
+ * off whichever visible `<canvas>` element's bounding box contains
+ * `(x, y)`, via `CanvasRenderingContext2D.getImageData`. Confirmed to
+ * return exactly `#9e9e9e` (NOT_VISITED_FILL_COLOR, alpha 153 ==
+ * `fillOpacity: 0.6` from StateBoundaryOverlay.js) before marking Texas
+ * visited, and a color matching `#2e7d32` (VISITED_FILL_COLOR) within 1
+ * unit per RGB channel after -- that small a delta is ordinary
+ * canvas/color-space rounding, not a different color, so channel values
+ * are compared with a small tolerance rather than requiring an exact
+ * string match.
+ *
+ * Samples a small neighborhood of pixels (not just the exact target
+ * pixel) and returns the most common resulting color, so a single
+ * anti-aliased or stroke-boundary pixel can't produce a flaky read.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {number} x
+ * @param {number} y
+ * @returns {Promise<string | null>}
+ */
+async function getPolygonFillColorAtPoint(page, x, y) {
+  // The callback below runs inside the real browser page (via
+  // page.evaluate), not under Node, so `document` here is the real DOM
+  // global -- unlike the rest of this file, which runs under Node via the
+  // Playwright test runner (see eslint.config.mjs's `e2e/**/*.js` block).
+  return page.evaluate(({ x, y }) => {
+    // eslint-disable-next-line no-undef
+    const canvases = Array.from(document.querySelectorAll('canvas'));
+    const colorCounts = new Map();
+
+    for (const canvas of canvases) {
+      const rect = canvas.getBoundingClientRect();
+      const containsPoint = x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
+      if (!containsPoint || rect.width === 0 || rect.height === 0) {
+        continue;
+      }
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) {
+        continue;
+      }
+      const localX = Math.round(((x - rect.left) / rect.width) * canvas.width);
+      const localY = Math.round(((y - rect.top) / rect.height) * canvas.height);
+      const sampleSize = 5;
+      const offset = Math.floor(sampleSize / 2);
+      const startX = Math.max(0, localX - offset);
+      const startY = Math.max(0, localY - offset);
+      const data = ctx.getImageData(startX, startY, sampleSize, sampleSize).data;
+      for (let i = 0; i < data.length; i += 4) {
+        const hex = `#${[data[i], data[i + 1], data[i + 2]]
+          .map((channel) => channel.toString(16).padStart(2, '0'))
+          .join('')}`;
+        colorCounts.set(hex, (colorCounts.get(hex) || 0) + 1);
+      }
+    }
+
+    if (colorCounts.size === 0) {
+      return null;
+    }
+    let mostCommonColor = null;
+    let highestCount = -1;
+    for (const [color, count] of colorCounts) {
+      if (count > highestCount) {
+        mostCommonColor = color;
+        highestCount = count;
+      }
+    }
+    return mostCommonColor;
+  }, { x, y });
+}
+
+/**
+ * Compares two `#rrggbb` colors case-insensitively, allowing a small
+ * per-channel tolerance -- rendering/color-space rounding can shift a
+ * sampled canvas pixel by a unit or two per channel from the exact hex
+ * value passed to `fillColor` (confirmed empirically: this project's real
+ * rendered "visited" green sampled as `#2e7d33`, one unit off of
+ * `resolveFillColor.js`'s literal `#2e7d32`, on the same pixel the
+ * "not visited" gray sampled as the backend's exact `#9e9e9e`).
+ *
+ * @param {string} actualHexColor
+ * @param {string} expectedHexColor
+ * @returns {boolean}
+ */
+function isMatchingFillColor(actualHexColor, expectedHexColor) {
+  if (actualHexColor == null) {
+    return false;
+  }
+  const toChannels = (hex) => {
+    const normalized = hex.toLowerCase().replace('#', '');
+    return [0, 2, 4].map((start) => parseInt(normalized.slice(start, start + 2), 16));
+  };
+  const actualChannels = toChannels(actualHexColor);
+  const expectedChannels = toChannels(expectedHexColor);
+  const CHANNEL_TOLERANCE = 4;
+  return actualChannels.every(
+    (channel, index) => Math.abs(channel - expectedChannels[index]) <= CHANNEL_TOLERANCE
+  );
+}
+
+/**
+ * Waits for Map_View to reach its ready state: no map-view-error,
+ * google-map-canvas visible, and its real Maps-API-injected `.gm-style`
+ * child visible.
  */
 async function waitForMapReady(page) {
   await expect(page.getByTestId('map-view-error')).not.toBeVisible();
@@ -180,6 +318,15 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
   test('mark, reload+verify, unmark, reload+verify', async ({ page }) => {
     await page.goto('/');
     await waitForMapReady(page);
+
+    // Merged from the former e2e/mapLoads.spec.js: this is the very first
+    // page load in this test, so folding this assertion in here (rather
+    // than giving it its own separate test/navigation) verifies the same
+    // "app loads and Google Maps actually boots" behavior without any
+    // additional page load or Maps API call -- minimizing real Google API
+    // usage and total e2e run time, per explicit project goal.
+    await expect(page).toHaveTitle('Coordinate Commons');
+
     await logIn(page, username, password);
 
     const { x: targetX, y: targetY } = await getTargetStatePagePosition(page);
@@ -214,6 +361,12 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
       // visited") actually true on the backend before Step 1 builds on
       // top of it, not just true in the optimistic UI.
       await expect(page.getByTestId('state-info-panel-saving')).not.toBeVisible({ timeout: 10_000 });
+      await expect
+        .poll(
+          async () => isMatchingFillColor(await getPolygonFillColorAtPoint(page, targetX, targetY), NOT_VISITED_FILL_COLOR),
+          { timeout: 10_000 }
+        )
+        .toBe(true);
     }
 
     // --- Step 1: mark the state as visited -----------------------------
@@ -221,6 +374,17 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
     await expect(page.getByTestId('state-info-panel-content')).toHaveText(
       expectedInfoPanelText(true)
     );
+    // Also verify the real rendered polygon color, not just the info
+    // panel's text -- the color update happens via a React effect
+    // (StateBoundaryOverlay.js's `polygon.setOptions({ fillColor: ... })`)
+    // that isn't guaranteed to be synchronous with the info panel's own
+    // update, hence polling rather than a single immediate read.
+    await expect
+      .poll(
+        async () => isMatchingFillColor(await getPolygonFillColorAtPoint(page, targetX, targetY), VISITED_FILL_COLOR),
+        { timeout: 10_000 }
+      )
+      .toBe(true);
     // Wait for the background save (POST /visit) to actually settle
     // before reloading -- the optimistic UI update above happens
     // synchronously and well before the save even starts, so reloading
@@ -254,12 +418,38 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
       expectedInfoPanelText(true),
       { timeout: 10_000 }
     );
+    // This is the more important of the two polygon-color checks in this
+    // test: it proves the polygon re-renders with the correct color on a
+    // FRESH page load, driven by the real listVisitedStates response, not
+    // just immediately after an optimistic click (Step 1's check above
+    // could in principle pass even if the color only ever updated
+    // optimistically and never survived a reload).
+    await expect
+      .poll(
+        async () =>
+          isMatchingFillColor(
+            await getPolygonFillColorAtPoint(page, targetXAfterReload1, targetYAfterReload1),
+            VISITED_FILL_COLOR
+          ),
+        { timeout: 10_000 }
+      )
+      .toBe(true);
 
     // --- Step 3: unmark the state ---------------------------------------
     await page.mouse.click(targetXAfterReload1, targetYAfterReload1);
     await expect(page.getByTestId('state-info-panel-content')).toHaveText(
       expectedInfoPanelText(false)
     );
+    await expect
+      .poll(
+        async () =>
+          isMatchingFillColor(
+            await getPolygonFillColorAtPoint(page, targetXAfterReload1, targetYAfterReload1),
+            NOT_VISITED_FILL_COLOR
+          ),
+        { timeout: 10_000 }
+      )
+      .toBe(true);
     // Same reasoning as Step 1's wait above: let the real background save
     // settle before reloading, so Step 4's verification isn't racing an
     // in-flight (and about-to-be-aborted-by-navigation) POST /visit.
@@ -276,5 +466,15 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
       expectedInfoPanelText(false),
       { timeout: 10_000 }
     );
+    await expect
+      .poll(
+        async () =>
+          isMatchingFillColor(
+            await getPolygonFillColorAtPoint(page, targetXAfterReload2, targetYAfterReload2),
+            NOT_VISITED_FILL_COLOR
+          ),
+        { timeout: 10_000 }
+      )
+      .toBe(true);
   });
 });
