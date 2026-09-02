@@ -155,3 +155,14 @@ This feature is the front-end for a browser-based React web application called t
 6. WHEN the visited status of the currently hovered State_Boundary changes in the Shared_State_Store, THE State_Info_Panel SHALL update the displayed visited status to match, without requiring the user to move the mouse.
 7. THE State_Info_Panel SHALL be usable by both authenticated and unauthenticated users, per Requirement 9.
 8. IF the user's input device does not support hover (e.g., touch-only), THEN THE State_Info_Panel SHALL display the name and visited status of the most recently clicked State_Boundary instead of relying on hover.
+
+### Requirement 11: Visited and Unvisited States List
+
+**User Story:** As a user, I want to see a list of which states I have and have not marked as visited, so that I can review my overall progress at a glance without hovering over every state individually.
+
+#### Acceptance Criteria
+
+1. THE Coordinate_Commons SHALL display, in an area below the Map_View, two lists of state names: a Visited_State list positioned on the left, and a list of State_Boundary entries that are not Visited_State positioned on the right.
+2. THE two lists SHALL together include exactly the currently loaded State_Boundary entries, with each State_Boundary appearing in exactly one of the two lists according to its current visited status.
+3. WHEN the visited status of a State_Boundary changes in the Shared_State_Store, THE Coordinate_Commons SHALL move that State_Boundary's name to the appropriate list within 1 second of the change, without requiring a page reload.
+4. THE two lists SHALL be available to both authenticated and unauthenticated users, per Requirement 9.

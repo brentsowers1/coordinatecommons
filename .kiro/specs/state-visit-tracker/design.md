@@ -35,6 +35,7 @@ graph TD
     MapView --> GoogleMapCanvas
     MapView --> StateBoundaryOverlay
     MapView --> StateInfoPanel
+    MapView --> VisitedStatesLists
     GoogleMapCanvas -. "creates map instance" .-> StateBoundaryOverlay
     LoginPage --> LoginForm
 ```
@@ -46,6 +47,7 @@ graph TD
 - **MapView**: Owns Google Maps lifecycle (loading, error, retry) and renders `GoogleMapCanvas`, `StateBoundaryOverlay`, `StateInfoPanel`.
 - **StateBoundaryOverlay**: Draws the 51 region polygons on the map and colors them from `useVisitedStateIds` (Requirement 6).
 - **StateInfoPanel**: Fixed-position panel below the map (Requirement 10).
+- **VisitedStatesLists**: Two side-by-side lists below the map, showing visited (left) and not-visited (right) state names, partitioned via `partitionRegionsByVisited` (Requirement 11).
 - **LoginPage / LoginForm**: Username/password form calling `AuthenticationService`.
 
 ### Data Flow
@@ -279,6 +281,18 @@ function computeInfoPanelContent(infoPanelStateId, regionsById, visitedStateIds)
 - `infoPanelStateId` is updated by hover (mousemove/mouseout on the map) on hover-capable devices, and by click on touch-only devices (detected once via `matchMedia('(hover: hover) and (pointer: fine)')`, consistent with Requirement 10.8) — this is the only place device capability is branched; `computeInfoPanelContent` itself is agnostic to how `infoPanelStateId` was set (Property 21).
 - Because `computeInfoPanelContent` is a pure function of shared-state values, it re-renders whenever `useVisitedStateIds` changes even without pointer movement (10.6 / Property 20).
 
+### VisitedStatesLists
+
+Rendered by `MapView` below the map, as a sibling of `GoogleMapCanvas`/`StateBoundaryOverlay`/`StateInfoPanel` (Requirement 11). Reads `useVisitedStateIds` itself (matching `StateInfoPanel`'s pattern of reading shared state directly) and reuses the `regions` array `MapView` already holds from its own `useRegionsLoader()` call rather than fetching the boundary GeoJSON a second time.
+
+```javascript
+/** Pure function: splits `regions` into visited/not-visited lists.
+ *  Returns { visited: Region[], notVisited: Region[] }, sorted alphabetically by name. */
+function partitionRegionsByVisited(regions, visitedStateIds) { /* ... */ }
+```
+
+Like `StateInfoPanel`, this component does not read `useSession`, so it is available regardless of authentication state (Requirement 11.4). Because it re-renders on any `useVisitedStateIds` change, moving a state between the two lists after a map click requires no additional event wiring (Requirement 11.3; Property 22).
+
 ### LoginPage / LoginForm
 
 - Client-side validation via `validateCredentials` (shared with `AuthenticationService`) blocks submission and shows "both fields are required" (or the appropriate length message) without calling Cognito (1.3/1.4).
@@ -456,6 +470,12 @@ For any sequence of one or more clicked `stateId`s on a simulated touch-only dev
 
 **Validates: Requirements 10.8**
 
+### Property 22: The visited/not-visited lists partition exactly the currently loaded regions by membership
+
+For any list of loaded regions and any `visitedStateIds` map, `partitionRegionsByVisited(regions, visitedStateIds)` returns two lists whose union (regardless of order) equals exactly the input `regions`, with each region appearing in the `visited` list if and only if its `stateId` is a key of `visitedStateIds`, and in the `notVisited` list otherwise -- no region is duplicated or omitted.
+
+**Validates: Requirements 11.2, 11.3**
+
 ## Error Handling
 
 | Failure | Detection | Front-end behavior | Requirement |
@@ -475,7 +495,7 @@ For any sequence of one or more clicked `stateId`s on a simulated touch-only dev
 
 **Language/tooling**: JavaScript (JSX), Jest as the test runner, React Testing Library for component-level unit/integration tests, and `fast-check` as the property-based testing library (minimum 100 runs per property, configured via `fc.assert(fc.property(...), { numRuns: 100 })`). Each property test is tagged in a comment referencing its design property, e.g. `// Feature: state-visit-tracker, Property 7: Region hit-testing resolves clicks to exactly the containing region, or none`.
 
-**Property tests** cover the 21 properties above, exercised against the pure functions they name (`validateCredentials`, the login/logout/session-clearing handlers, `resolveRegionAtLatLng`, `handleStateBoundaryClick`, `resolveFillColor`, the Visit_Record_API client's header/short-circuit behavior (list and save, with `visited: true`/`false`) with a mocked `fetch`, `shouldShowLoginPrompt`, `computeInfoPanelContent`). None of these require a live Google Maps instance, a live Cognito pool, or a live Visit_Record_API — all external calls are mocked at the `fetch` / Cognito SDK boundary, keeping iteration cost low.
+**Property tests** cover the 22 properties above, exercised against the pure functions they name (`validateCredentials`, the login/logout/session-clearing handlers, `resolveRegionAtLatLng`, `handleStateBoundaryClick`, `resolveFillColor`, the Visit_Record_API client's header/short-circuit behavior (list and save, with `visited: true`/`false`) with a mocked `fetch`, `shouldShowLoginPrompt`, `computeInfoPanelContent`, `partitionRegionsByVisited`). None of these require a live Google Maps instance, a live Cognito pool, or a live Visit_Record_API — all external calls are mocked at the `fetch` / Cognito SDK boundary, keeping iteration cost low.
 
 **Unit/example tests** cover the scenarios identified as EXAMPLE in the acceptance-criteria prework: default view and login-control visibility (1.1, 1.2), loading/disabled-state UI during login (1.10), the specific invalid-credentials and timeout error messages (1.8, 1.9), the fixed initial map viewport and exactly-51-regions data integrity check (3.1, 3.2), map-script and runtime boundary-fetch loading/error/retry UI, including the combined loading indicator and per-source retry behavior, with `fetch` mocked at the component level (3.3, 3.4), the 10-second timeout behavior for the initial visited-states load and its retry control (4.1, 4.2, 4.4, 4.5), the sign-out-reason wording distinction (2.4), color-update timing after a state change (6.2), the fixed (non-tooltip) positioning of the State_Info_Panel (10.1), and smoke tests confirming the Google Maps script loads and both a map and the region overlay are actually constructed (8.2, 8.3, 8.4).
 

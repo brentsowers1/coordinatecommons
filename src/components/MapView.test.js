@@ -416,4 +416,43 @@ describe('MapView - smoke test: real Maps API objects constructed (task 12.6)', 
     expect(screen.getByTestId('state-info-panel')).toBeInTheDocument();
     expect(screen.getByTestId('state-info-panel-placeholder')).toBeInTheDocument();
   });
+
+  // Regression test: MapView must actually mount the real
+  // VisitedStatesLists (design.md Component Tree: "MapView -->
+  // VisitedStatesLists") once both loaders are ready, following the same
+  // reasoning as the StateInfoPanel regression test above -- mounted for
+  // real, not mocked.
+  it('renders the real VisitedStatesLists once both loaders are ready', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(REGIONS_FIXTURE),
+    });
+
+    window.google = {
+      maps: {
+        Map: jest.fn().mockImplementation(function Map(element, options) {
+          this.element = element;
+          this.options = options;
+          this.addListener = jest.fn(() => ({ remove: jest.fn() }));
+        }),
+        Polygon: jest.fn().mockImplementation(function Polygon(options) {
+          this.options = options;
+          this.setMap = jest.fn();
+          this.setOptions = jest.fn();
+        }),
+        importLibrary: jest.fn().mockResolvedValue({}),
+      },
+    };
+
+    render(<MapView />);
+
+    const scriptTag = getMapScriptTag();
+    act(() => {
+      scriptTag.onload();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('google-map-canvas')).toBeInTheDocument());
+
+    expect(screen.getByTestId('visited-states-lists')).toBeInTheDocument();
+  });
 });

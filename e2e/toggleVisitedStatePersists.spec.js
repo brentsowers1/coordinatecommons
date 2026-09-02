@@ -24,14 +24,23 @@
 // without proving the real integration works" gap this suite exists to
 // close.
 //
-// At each of those mark/unmark/reload points, this test checks two
-// independent things, not just one: the State_Info_Panel's text AND the
-// actual rendered color of the real `google.maps.Polygon` overlay at that
-// point on the map (via `getPolygonFillColorAtPoint`, sampling real canvas
-// pixel data -- see that function's own comment for what was found when
-// investigating how Google actually renders that color in the DOM).
-// Checking only the info panel's text would miss a real bug where the
-// panel updates correctly but the polygon itself never repaints.
+// At each of those mark/unmark/reload points, this test checks THREE
+// independent things, not just one or two: the State_Info_Panel's text,
+// the actual rendered color of the real `google.maps.Polygon` overlay at
+// that point on the map (via `getPolygonFillColorAtPoint`, sampling real
+// canvas pixel data -- see that function's own comment for what was found
+// when investigating how Google actually renders that color in the DOM),
+// AND that the target state shows up in the correct column of the
+// `VisitedStatesLists` component rendered below the map (via
+// `expectVisitedStatesListsShow`). Checking only the info panel's text
+// would miss a real bug where the panel updates correctly but the polygon
+// itself never repaints; checking only the info panel and polygon would
+// separately miss a real bug where the map/panel update correctly but the
+// independent below-the-map lists component never syncs at all, or -- the
+// specific failure mode `expectVisitedStatesListsShow` is written to catch
+// -- syncs incorrectly by showing the state in both lists or in neither
+// one (see `partitionRegionsByVisited.js`'s Property 22 guarantee that
+// every region appears in exactly one of the two lists).
 //
 // Credentials: this test requires a real Cognito user pool account's
 // username/password, supplied via `e2e/.env.e2e-credentials.local` (see
@@ -85,6 +94,7 @@ const NOT_VISITED_FILL_COLOR = '#9e9e9e';
 // }) was checked the same way as a second candidate and also resolves
 // correctly, but Texas was kept as the primary choice.
 const TARGET_STATE_NAME = 'Texas';
+const TARGET_STATE_ID = 'TX';
 const TARGET_STATE_LAT_LNG = { lat: 31.0, lng: -99.0 };
 
 // This test performs three full login+map-ready cycles plus two page
@@ -303,6 +313,44 @@ function expectedInfoPanelText(visited) {
   return `${TARGET_STATE_NAME} \u2014 ${visited ? 'Visited' : 'Not visited'}`;
 }
 
+/**
+ * Asserts that `stateId` shows up in the correct column of the
+ * `VisitedStatesLists` component (`src/components/VisitedStatesLists.jsx`)
+ * -- and, just as importantly, that it does NOT also show up in the other
+ * column. `partitionRegionsByVisited.js`'s Property 22 guarantees every
+ * loaded region appears in EXACTLY ONE of the two lists at all times
+ * (never both, never neither), so a bug that put Texas in both lists, or
+ * in neither, would slip past an assertion that only checked for presence
+ * of the expected item without also checking absence of the other.
+ *
+ * Unlike the polygon-fill-color checks above (which need `expect.poll`
+ * because `StateBoundaryOverlay.js` repaints the real `google.maps.Polygon`
+ * imperatively from a `useEffect`, on a timing not guaranteed to line up
+ * with other updates), `VisitedStatesLists` needs no such polling here: it
+ * is a plain, synchronous re-render off the same shared `useVisitedStateIds`
+ * state that `StateInfoPanel` itself reads directly during render (no
+ * intervening effect of its own) -- the same reasoning that lets the
+ * existing info-panel-text assertions above use a direct `toHaveText`
+ * with a timeout rather than `expect.poll`. A direct `toBeVisible` /
+ * `not.toBeVisible` locator assertion (each with its own generous timeout
+ * to absorb the real network round trip to the Visit_Record_API after a
+ * reload) is therefore sufficient and consistent with that existing
+ * convention.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} stateId
+ * @param {boolean} visited
+ */
+async function expectVisitedStatesListsShow(page, stateId, visited) {
+  if (visited) {
+    await expect(page.getByTestId(`visited-state-item-${stateId}`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId(`not-visited-state-item-${stateId}`)).not.toBeVisible();
+  } else {
+    await expect(page.getByTestId(`not-visited-state-item-${stateId}`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId(`visited-state-item-${stateId}`)).not.toBeVisible();
+  }
+}
+
 test.describe('toggling a visited state persists through the real Visit_Record_API', () => {
   let username;
   let password;
@@ -349,6 +397,7 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
       await expect(page.getByTestId('state-info-panel-content')).toHaveText(
         expectedInfoPanelText(false)
       );
+      await expectVisitedStatesListsShow(page, TARGET_STATE_ID, false);
       // This normalization click's own background save (settle()) must
       // finish before proceeding, for the same reason Step 1's wait below
       // is needed: without it, this click's in-flight POST /visit could
@@ -374,6 +423,7 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
     await expect(page.getByTestId('state-info-panel-content')).toHaveText(
       expectedInfoPanelText(true)
     );
+    await expectVisitedStatesListsShow(page, TARGET_STATE_ID, true);
     // Also verify the real rendered polygon color, not just the info
     // panel's text -- the color update happens via a React effect
     // (StateBoundaryOverlay.js's `polygon.setOptions({ fillColor: ... })`)
@@ -418,6 +468,7 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
       expectedInfoPanelText(true),
       { timeout: 10_000 }
     );
+    await expectVisitedStatesListsShow(page, TARGET_STATE_ID, true);
     // This is the more important of the two polygon-color checks in this
     // test: it proves the polygon re-renders with the correct color on a
     // FRESH page load, driven by the real listVisitedStates response, not
@@ -440,6 +491,7 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
     await expect(page.getByTestId('state-info-panel-content')).toHaveText(
       expectedInfoPanelText(false)
     );
+    await expectVisitedStatesListsShow(page, TARGET_STATE_ID, false);
     await expect
       .poll(
         async () =>
@@ -466,6 +518,7 @@ test.describe('toggling a visited state persists through the real Visit_Record_A
       expectedInfoPanelText(false),
       { timeout: 10_000 }
     );
+    await expectVisitedStatesListsShow(page, TARGET_STATE_ID, false);
     await expect
       .poll(
         async () =>
