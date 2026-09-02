@@ -64,9 +64,14 @@ export function LoginPromptBanner() {
     return null;
   }
 
+  // Pico.css: `<article>` is Pico's documented "card" element
+  // (picocss.com/docs/card) -- a bordered, padded block -- which reads
+  // more like a distinct banner than a bare `<div>` would under Pico's
+  // defaults. `role="status"`/the `data-testid` and message text are
+  // unchanged.
   return (
-    <div data-testid="login-prompt-banner" role="status">
+    <article data-testid="login-prompt-banner" role="status">
       <p>{resolveMessage(signOutReason)}</p>
-    </div>
+    </article>
   );
 }

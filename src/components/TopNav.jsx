@@ -31,6 +31,19 @@
 // tab", middle-click, or right-click-copy-link the way a user might
 // expect from a link -- accepted here because the visual/semantic "link"
 // look was explicitly requested over button semantics.
+//
+// Pico.css markup: Pico's documented nav pattern (picocss.com/docs/nav)
+// styles a `<nav>` containing one or more `<ul>`/`<li>` groups -- multiple
+// `<ul>`s inside the same `<nav>` are laid out left-to-right in order,
+// which is exactly the "home on the left, login/logout on the right"
+// layout this component already needed. So the home link is wrapped in
+// its own leading `<ul><li>`, and the login/logout link in a second,
+// trailing `<ul><li>`; Pico's own nav CSS spaces the two groups apart,
+// which replaces the previous manual
+// `style={{ display: 'flex', justifyContent: 'space-between', ... }}`
+// inline style. The `<a>` elements themselves, their `data-testid`s,
+// `onClick` handlers, and the `href="#"` + `preventDefault()` pattern are
+// unchanged.
 
 import { useSession, useVisitedStateIds, useSignOutReason } from '../state/sharedState';
 import { handleLogout } from '../services/sessionHandlers';
@@ -66,19 +79,27 @@ export function TopNav({ onNavigateHome, onRequestLogin }) {
   }
 
   return (
-    <nav aria-label="Main" data-testid="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <a href="#" onClick={handleHomeClick} data-testid="nav-home-link">
-        Coordinate Commons
-      </a>
-      {session ? (
-        <a href="#" onClick={handleLogoutClick} data-testid="nav-logout-link">
-          Log out
-        </a>
-      ) : (
-        <a href="#" onClick={handleLoginClick} data-testid="nav-login-link">
-          Log in
-        </a>
-      )}
+    <nav aria-label="Main" data-testid="top-nav">
+      <ul>
+        <li>
+          <a href="#" onClick={handleHomeClick} data-testid="nav-home-link">
+            Coordinate Commons
+          </a>
+        </li>
+      </ul>
+      <ul>
+        <li>
+          {session ? (
+            <a href="#" onClick={handleLogoutClick} data-testid="nav-logout-link">
+              Log out
+            </a>
+          ) : (
+            <a href="#" onClick={handleLoginClick} data-testid="nav-login-link">
+              Log in
+            </a>
+          )}
+        </li>
+      </ul>
     </nav>
   );
 }

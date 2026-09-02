@@ -16,6 +16,15 @@
 // (Requirement 11.3) comes for free: no new event wiring is needed here,
 // and list items intentionally have no click handling of their own --
 // toggling a visited state still only happens via the map.
+//
+// Pico.css layout: the outer wrapper has exactly two direct `<div>`
+// children (one per column), which is exactly the shape Pico's documented
+// `.grid` class expects (picocss.com/docs/grid: direct children of a
+// `.grid` container automatically become responsive columns) -- a
+// cleaner, documented fit for this specific two-column layout than the
+// previous manual `style={{ display: 'flex', justifyContent:
+// 'space-between' }}`, so that inline style is replaced with
+// `className="grid"`.
 
 import React from 'react';
 import { useVisitedStateIds } from '../state/sharedState';
@@ -72,7 +81,7 @@ export function VisitedStatesLists({ regions = [] }) {
   );
 
   return (
-    <div data-testid="visited-states-lists" style={{ display: 'flex', justifyContent: 'space-between' }}>
+    <div data-testid="visited-states-lists" className="grid">
       <VisitedStatesColumn
         heading="Visited"
         regionsList={visited}

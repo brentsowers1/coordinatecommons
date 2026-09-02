@@ -54,6 +54,17 @@
 // setShowLoginPage(true)}` (the "Log in" control, replacing MapPage's
 // former inline login control). Logout itself needs no callback from
 // AuthGate -- TopNav handles it internally via `handleLogout()`.
+//
+// Pico.css layout landmarks: AuthGate is effectively the whole page body
+// (App renders nothing else), so its output is wrapped to match Pico's
+// own documented `<body><header>...</header><main class="container">...
+// </main></body>` pattern (see Pico's README/docs "Landmarks & section"
+// and "Container" pages) -- `<header>` wraps `TopNav` and `<main
+// class="container">` wraps the current page (`LoginPage`/`MapPage`).
+// This is purely presentational: it gives both elements Pico's responsive
+// vertical spacing and gives the page content a centered, max-width
+// container, with no change to `showLoginPage`/`useSession` logic or to
+// `TopNav`/`MapPage`/`LoginPage` themselves.
 
 import React from 'react';
 import { useSession } from '../state/sharedState';
@@ -75,11 +86,13 @@ export function AuthGate() {
 
   return (
     <>
-      <TopNav
-        onNavigateHome={() => setShowLoginPage(false)}
-        onRequestLogin={() => setShowLoginPage(true)}
-      />
-      {showLoginPage ? <LoginPage /> : <MapPage />}
+      <header>
+        <TopNav
+          onNavigateHome={() => setShowLoginPage(false)}
+          onRequestLogin={() => setShowLoginPage(true)}
+        />
+      </header>
+      <main className="container">{showLoginPage ? <LoginPage /> : <MapPage />}</main>
     </>
   );
 }

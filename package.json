@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/brentsowers1/coordinatecommons#readme",
   "dependencies": {
+    "@picocss/pico": "2.1.1",
     "amazon-cognito-identity-js": "6.3.20",
     "make-shared-state-hook": "1.3.0",
     "react": "19.2.8",
