@@ -47,7 +47,22 @@ function VisitedStatesColumn({ heading, regionsList, listTestId, itemTestId }) {
       {regionsList.length === 0 ? (
         <p>None yet</p>
       ) : (
-        <ul data-testid={listTestId}>
+        // Spacing fix: measured via getComputedStyle() against the real
+        // running page, Pico's default rule `:where(ol, ul) li {
+        // margin-bottom: calc(var(--pico-typography-spacing-vertical) *
+        // 0.25) }` (picocss.com/docs/css-variables) was adding a measured
+        // 5px of margin below every `<li>` at this project's base 20px
+        // root font size (`--pico-typography-spacing-vertical` defaults to
+        // `1rem`), on top of each `<li>`'s own ~30px line-height-driven
+        // text height -- across a 50+-item list that adds up to a visibly
+        // taller-than-needed gap between state names. Overriding
+        // `--pico-typography-spacing-vertical` down to `0.25rem`, scoped
+        // to just this `<ul>` (so nothing outside it, e.g. headings or
+        // paragraphs elsewhere on the page, is affected), drops that
+        // per-item margin to a measured ~1px while leaving line-height
+        // (the actual text glyph spacing, unrelated to this variable)
+        // untouched.
+        <ul data-testid={listTestId} style={{ '--pico-typography-spacing-vertical': '0.25rem' }}>
           {regionsList.map((region) => (
             <li key={region.stateId} data-testid={itemTestId(region.stateId)}>
               {region.name}

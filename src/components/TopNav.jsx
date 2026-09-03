@@ -78,8 +78,28 @@ export function TopNav({ onNavigateHome, onRequestLogin }) {
     setSignOutReason(result.signOutReason);
   }
 
+  // Spacing fix: measured via getComputedStyle() against the real running
+  // page, `nav li` (picocss.com/docs/css-variables) uses
+  // `padding: var(--pico-nav-element-spacing-vertical) var(--pico-nav-
+  // element-spacing-horizontal)`, and Pico's default
+  // `--pico-nav-element-spacing-vertical` is `1rem` -- confirmed 20px
+  // top+bottom padding on each `<li>` at this project's base 20px root
+  // font size, producing a measured 70px-tall `<nav>`/`<header>` (vs.
+  // `<main class="container">`'s own 0px top/bottom padding, so the extra
+  // height here is entirely nav-internal, not from the shared `container`
+  // class). Overriding just this one variable, scoped to this `<nav>`
+  // alone via an inline custom-property style (rather than at `:root`, per
+  // Pico's own documented customization approach), drops that `<li>`
+  // padding to 5px top+bottom, which measured as a 40px-tall nav after the
+  // change -- a visible reduction while keeping the link's own click
+  // target padding (`--pico-nav-link-spacing-vertical`, unrelated/
+  // untouched) intact.
   return (
-    <nav aria-label="Main" data-testid="top-nav">
+    <nav
+      aria-label="Main"
+      data-testid="top-nav"
+      style={{ '--pico-nav-element-spacing-vertical': '0.25rem' }}
+    >
       <ul>
         <li>
           <a href="#" onClick={handleHomeClick} data-testid="nav-home-link">

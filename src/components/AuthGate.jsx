@@ -59,12 +59,34 @@
 // (App renders nothing else), so its output is wrapped to match Pico's
 // own documented `<body><header>...</header><main class="container">...
 // </main></body>` pattern (see Pico's README/docs "Landmarks & section"
-// and "Container" pages) -- `<header>` wraps `TopNav` and `<main
-// class="container">` wraps the current page (`LoginPage`/`MapPage`).
-// This is purely presentational: it gives both elements Pico's responsive
+// and "Container" pages) -- both `<header class="container">` (which
+// wraps `TopNav`) and `<main class="container">` (which wraps the current
+// page, `LoginPage`/`MapPage`) carry Pico's `container` class. This is
+// purely presentational: it gives both elements Pico's responsive
 // vertical spacing and gives the page content a centered, max-width
 // container, with no change to `showLoginPage`/`useSession` logic or to
 // `TopNav`/`MapPage`/`LoginPage` themselves.
+//
+// `<header>` needs the explicit `container` class (matching `<main>`)
+// rather than relying on Pico's class-less semantic containers, because
+// this project imports the classed build (`@picocss/pico` resolves to
+// `css/pico.min.css` -- see src/index.jsx's import comment); Pico's own
+// container docs (picocss.com/docs/container) note that ".container and
+// .container-fluid are not available in the class-less version" and that
+// semantic (class-less) auto-containers on `<header>`/`<main>`/`<footer>`
+// are a separate, unused-here mode. Without this class, `<header>` was
+// unconstrained (full viewport width) while `<main>` was constrained to
+// Pico's centered, max-width container -- and per Pico's nav docs
+// (picocss.com/docs/nav, "Overflow" section), `<nav>` deliberately uses
+// `overflow: visible` plus negative margins on its children to align its
+// content with whatever container it sits inside (so keyboard
+// focus-visible outlines on the links aren't clipped). With `<header>`
+// unconstrained, that alignment reference was the bare viewport edge
+// instead of the same centered box `<main>` uses, which produced a small
+// horizontal overflow (a sliver of the right-most nav link/text got cut
+// off, forcing a slight horizontal scroll). Giving `<header>` the same
+// `container` class as `<main>` fixes this by making both elements agree
+// on the same centered container.
 
 import React from 'react';
 import { useSession } from '../state/sharedState';
@@ -86,7 +108,7 @@ export function AuthGate() {
 
   return (
     <>
-      <header>
+      <header className="container">
         <TopNav
           onNavigateHome={() => setShowLoginPage(false)}
           onRequestLogin={() => setShowLoginPage(true)}
