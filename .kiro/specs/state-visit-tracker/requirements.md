@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This feature is the front-end for a browser-based React web application called the Coordinate_Commons. The application displays a Google Map with an overlay of the boundaries of the 50 US states and Washington D.C. (51 regions in total). The Map_View and the click-to-mark interaction are available to both authenticated and unauthenticated visitors: any visitor can view the map and click a state boundary to mark it as visited (and click again to unmark it). However, only an authenticated user's visited-state marks are persisted, by calling an existing AWS API Gateway endpoint backed by existing AWS Lambda functions (the Visit_Record_API); building or modifying that backend is out of scope for this spec. An unauthenticated user's marks exist only in the browser session and are not sent to the Visit_Record_API; Coordinate_Commons displays a prompt below the Map_View telling unauthenticated users that they need to log in to save their visited states. Users authenticate through a login page that collects a username and password and validates them against an existing AWS Cognito user pool; self-service sign-up and password reset are out of scope unless a future spec adds them. The application uses the `make-shared-state-hook` library for state that must be shared across components (for example, session state and the set of visited states).
+This feature is the front-end for a browser-based React web application called the Coordinate_Commons. The application displays a Google Map with an overlay of the boundaries of the 50 US states and Washington D.C. (51 regions in total). The Map_View and the click-to-mark interaction are available to both authenticated and unauthenticated visitors: any visitor can view the map and click a state boundary to mark it as visited (and click again to unmark it). However, only an authenticated user's visited-state marks are persisted, by calling an existing AWS API Gateway endpoint backed by existing AWS Lambda functions (the Visit_Record_API); building or modifying that backend is out of scope for this spec. An unauthenticated user's marks exist only in the browser session and are not sent to the Visit_Record_API; Coordinate_Commons displays a prompt below the Map_View telling unauthenticated users that they need to log in to save their visited states. Users authenticate through a login page that collects a username and password and validates them against an existing AWS Cognito user pool. Visitors without an account can sign up for one from the Login_Page; self-service password reset remains out of scope unless a future spec adds them. The application uses the `make-shared-state-hook` library for state that must be shared across components (for example, session state and the set of visited states).
 
 **Assumptions** (to be confirmed during design if incorrect):
 - The Visit_Record_API associates visited-state records with the signed-in user based on the Cognito ID token sent with each request.
@@ -16,6 +16,7 @@ This feature is the front-end for a browser-based React web application called t
 
 - **Coordinate_Commons**: The React single-page web application, named Coordinate Commons, described in this document.
 - **Login_Page**: The page presented to a visitor for entering a username and password.
+- **Sign_Up_Page**: The page presented to a visitor for creating a new account in the existing AWS Cognito user pool, and for entering the confirmation code sent to their email to complete that account's creation.
 - **Authentication_Service**: The integration layer within Coordinate_Commons that authenticates a user against the existing AWS Cognito user pool.
 - **Session**: The authenticated user's active login state within Coordinate_Commons, including the Cognito-issued ID token.
 - **Map_View**: The primary view of Coordinate_Commons that renders the Google Map together with the State_Boundary overlay.
@@ -167,3 +168,27 @@ This feature is the front-end for a browser-based React web application called t
 2. THE two lists SHALL together include exactly the currently loaded State_Boundary entries, with each State_Boundary appearing in exactly one of the two lists according to its current visited status.
 3. WHEN the visited status of a State_Boundary changes in the Shared_State_Store, THE Coordinate_Commons SHALL move that State_Boundary's name to the appropriate list within 1 second of the change, without requiring a page reload.
 4. THE two lists SHALL be available to both authenticated and unauthenticated users, per Requirement 9.
+
+### Requirement 12: Self-Service Sign-Up
+
+**User Story:** As a visitor without an account, I want to create one myself from the Login_Page, so that I can start saving my visited states without contacting anyone else to set up access.
+
+#### Acceptance Criteria
+
+1. WHILE a user is viewing the Login_Page, THE Coordinate_Commons SHALL display a control available to navigate to the Sign_Up_Page.
+2. WHEN a user selects the sign-up control, THE Coordinate_Commons SHALL display the Sign_Up_Page.
+3. THE Sign_Up_Page SHALL provide input fields for a username (maximum 128 characters, required), an email address (maximum 254 characters, required), a location (maximum 128 characters, optional), a password (maximum 256 characters, required), and a password confirmation (maximum 256 characters, required), and a control to submit them.
+4. IF a user submits the sign-up form with an empty username, empty email address, empty password, or empty password confirmation, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that those fields are required.
+5. IF a user submits the sign-up form with a username, email address, password, or password confirmation exceeding its maximum length, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that a field is too long.
+6. IF a user submits the sign-up form with an email address that is not a well-formed email address, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that the email address is invalid.
+7. IF a user submits the sign-up form with a password and password confirmation that do not match, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that the password and confirmation do not match.
+8. WHEN a user submits a sign-up form that passes the validation in criteria 4 through 7, THE Coordinate_Commons SHALL attempt to create a new account in the AWS Cognito user pool using the submitted username, email address, and password, and, if a location was provided, the submitted location, with the attempt completing within a maximum of 10 seconds.
+9. WHEN the AWS Cognito user pool accepts the account-creation request, THE Sign_Up_Page SHALL display a control for entering the confirmation code sent to the submitted email address, and a control to submit it.
+10. WHEN a user submits a non-empty confirmation code, THE Coordinate_Commons SHALL attempt to confirm the new account in the AWS Cognito user pool using that code, with the attempt completing within a maximum of 10 seconds.
+11. IF a user submits an empty confirmation code, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that a confirmation code is required.
+12. WHEN the AWS Cognito user pool confirms the new account successfully, THE Coordinate_Commons SHALL display a brief success indication and SHALL display the Login_Page, without storing a Session in the Shared_State_Store.
+13. IF the AWS Cognito user pool rejects the account-creation request because the submitted username is already in use, THEN THE Sign_Up_Page SHALL display an error message indicating that the username is already taken, and SHALL remain on the Sign_Up_Page's sign-up field step.
+14. IF the AWS Cognito user pool rejects the account-creation request because the submitted password does not meet the user pool's password requirements, THEN THE Sign_Up_Page SHALL display an error message indicating that the password does not meet the requirements, and SHALL remain on the Sign_Up_Page's sign-up field step.
+15. IF the AWS Cognito user pool rejects the submitted confirmation code as invalid or expired, THEN THE Sign_Up_Page SHALL display an error message indicating that the confirmation code is invalid or has expired, and SHALL remain on the Sign_Up_Page's confirmation-code step.
+16. IF an account-creation attempt or a confirmation attempt does not complete within 10 seconds or the AWS Cognito user pool cannot be reached, THEN THE Sign_Up_Page SHALL display an error message indicating that the request could not be completed, SHALL re-enable the relevant submit control, and SHALL remain on the same step of the Sign_Up_Page.
+17. WHILE an account-creation or confirmation request is in progress, THE Sign_Up_Page SHALL disable the relevant submit control and display a loading indicator.

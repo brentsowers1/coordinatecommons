@@ -14,7 +14,7 @@ The application is implemented in plain JavaScript (JSX), consistent with the `m
 |---|---|---|
 | Map rendering | Google Maps JavaScript API, loaded via a small loader hook (no wrapper library like `@react-google-maps/api`) | Requirement 8.2/8.3 mandate the Google Maps JavaScript API directly. A thin loader keeps the dependency surface small and gives full control over overlay lifecycle, matching the project's stated preference for minimal dependencies. |
 | State boundary hit-testing | A single map-level click/mousemove listener plus a pure, testable point-in-region lookup function, rather than one Google Maps click listener per polygon | Centralizing hit-testing in a pure function (`resolveRegionAtLatLng`) makes Requirement 3.5/3.6 and Requirement 10's hover behavior property-testable without a real Maps API instance, and gives deterministic behavior when polygons are near shared borders. |
-| Authentication | `amazon-cognito-identity-js` (the Cognito Identity SDK) rather than the full AWS Amplify library | The app only needs username/password authentication against an existing user pool (no sign-up, no hosted UI, no other Amplify categories). `amazon-cognito-identity-js` is the lighter-weight, focused dependency for this single need and avoids pulling in Amplify's broader surface area. |
+| Authentication | `amazon-cognito-identity-js` (the Cognito Identity SDK) rather than the full AWS Amplify library | The app needs username/password authentication and self-service sign-up (including email confirmation) against an existing user pool, but no hosted UI and no other Amplify categories. `amazon-cognito-identity-js` already exposes `CognitoUserPool.prototype.signUp` and `CognitoUser.prototype.confirmRegistration` directly, so sign-up needs no additional dependency; it remains the lighter-weight, focused choice over pulling in Amplify's broader surface area. |
 | Shared state | `make-shared-state-hook`, per Requirement 8.6/8.7 | Mandated by requirements. Per the library's own best practices, state is decomposed into several small hooks (session, visited-state ids, hovered/last-clicked id, pending-request ids) rather than one large object. |
 | Visit_Record_API client | A small fetch-based client module, not a generated SDK | The API surface is 2 operations (list, save-with-visited-flag — unmarking reuses the save operation with `visited: false` rather than a separate delete). A hand-written client keeps the Authorization-header and timeout logic in one auditable place (Requirement 7). |
 | State boundary source data | A single static GeoJSON asset, one Feature per region, each with a stable `stateId` (USPS 2-letter code, `DC` for the district), fetched at runtime via `fetch()` from a static path/CDN URL rather than imported into the JS bundle | Boundaries are fixed reference data, but they are also large relative to the app's core logic. Fetching them at runtime keeps them out of the JS bundle, reducing initial page load size; the boundary data loads in parallel with (or just after) the critical UI shell, at the cost of an extra loading/error state that the Map_View already needs to handle for the Maps API itself. |
@@ -30,6 +30,7 @@ graph TD
     AuthGate --> TopNav
     AuthGate --> MapPage
     AuthGate --> LoginPage
+    AuthGate --> SignUpPage
     MapPage --> MapView
     MapPage --> LoginPromptBanner
     MapView --> GoogleMapCanvas
@@ -38,17 +39,20 @@ graph TD
     MapView --> VisitedStatesLists
     GoogleMapCanvas -. "creates map instance" .-> StateBoundaryOverlay
     LoginPage --> LoginForm
+    SignUpPage --> SignUpForm
+    SignUpPage --> SignUpConfirmationForm
 ```
 
 - **App**: Top-level component. Instantiates the shared-state hooks module and renders `AuthGate`.
-- **AuthGate**: Reads the shared `useSession` hook and chooses between `MapPage` (default, per Requirement 1.1) and `LoginPage`; renders `TopNav` above whichever of the two is showing, so navigation is visible on every page.
+- **AuthGate**: Reads the shared `useSession` hook and chooses between `MapPage` (default, per Requirement 1.1), `LoginPage`, and `SignUpPage`, via a local `currentPage` enum (`'map' | 'login' | 'signup'`, generalizing the boolean this state used to be now that there are three top-level pages instead of two — see AuthGate.jsx's own module comment for the full navigation-state rationale); renders `TopNav` above whichever page is showing, so navigation is visible on every page.
 - **TopNav**: Always-visible top navigation. Provides a home control that returns to `MapPage`, a "Log in" control when there is no session (per Requirement 1.1/1.2), and a "Log out" control when there is a session (invoking the logout handler per Requirement 2.1).
 - **MapPage**: Composes `MapView` and, for unauthenticated sessions, `LoginPromptBanner` (Requirement 9.2/9.3).
 - **MapView**: Owns Google Maps lifecycle (loading, error, retry) and renders `GoogleMapCanvas`, `StateBoundaryOverlay`, `StateInfoPanel`.
 - **StateBoundaryOverlay**: Draws the 51 region polygons on the map and colors them from `useVisitedStateIds` (Requirement 6).
 - **StateInfoPanel**: Fixed-position panel below the map (Requirement 10).
 - **VisitedStatesLists**: Two side-by-side lists below the map, showing visited (left) and not-visited (right) state names, partitioned via `partitionRegionsByVisited` (Requirement 11).
-- **LoginPage / LoginForm**: Username/password form calling `AuthenticationService`.
+- **LoginPage / LoginForm**: Username/password form calling `AuthenticationService`; `LoginPage` also renders a "Sign up" link that navigates to `SignUpPage` (Requirement 12.1).
+- **SignUpPage / SignUpForm / SignUpConfirmationForm**: Two-step account-creation form calling `AuthenticationService` (Requirement 12); see its own subsection below.
 
 ### Data Flow
 
@@ -300,6 +304,16 @@ Like `StateInfoPanel`, this component does not read `useSession`, so it is avail
 - On `INVALID_CREDENTIALS`: shows "username or password is invalid", stays on Login_Page (1.8).
 - On `TIMEOUT_OR_UNREACHABLE`: shows "login attempt could not be completed", re-enables submit, stays on Login_Page (1.9).
 - On success: calls a callback that sets `useSession`, clears `useVisitedStateIds` to `{}`, and navigates to `MapPage`, which itself triggers the Requirement 4 load (1.6/1.7).
+- Renders a "Sign up" link below `LoginForm`. Clicking it calls the `onRequestSignUp` callback prop, which `AuthGate` wires to navigate to `SignUpPage` (Requirement 12.1/12.2) — `LoginPage` itself has no navigation state, matching how it already relies on `AuthGate` for the login-success navigation above.
+
+### Sign_Up_Page / SignUpForm / SignUpConfirmationForm
+
+`SignUpPage` owns a two-step local state machine (`'fields' | 'confirming'`) and the actual `signUp()`/`confirmSignUp()` calls; `SignUpForm` and `SignUpConfirmationForm` each own only their own fields, client-side validation, and pending/disabled/loading UI — the same split `LoginPage`/`LoginForm` already establish.
+
+- **Step 1 ('fields', initial)**: renders `SignUpForm`, collecting username, email, an optional location, password, and password confirmation (Requirement 12.3). Client-side validation via `validateSignUpFields(username, email, password, confirmPassword)` (exported from `authenticationService.js`, alongside `validateCredentials`) blocks submission and shows the appropriate message — required fields, length limits, invalid email format, or password/confirmation mismatch (Requirement 12.4–12.7) — without calling Cognito.
+- On submitting valid fields, `SignUpPage` calls `signUp(username, email, password, location)`, which wraps `CognitoUserPool.prototype.signUp`, enforces the same 10-second timeout pattern as `login()`, and sends `email` as a standard Cognito attribute always, and `custom:location` only when `location` is non-empty after trimming (Requirement 12.3, 12.8). It resolves with `{ username }` on success, or rejects with `{ kind: 'USERNAME_EXISTS' | 'INVALID_PASSWORD' | 'TIMEOUT_OR_UNREACHABLE' }`, mapped by `SignUpPage` to the corresponding message (Requirement 12.13, 12.14, 12.16) — never leaking raw Cognito errors, matching the `login()`/Requirement 8.5 convention.
+- **Step 2 ('confirming')**: on a successful `signUp()`, `SignUpPage` transitions to rendering `SignUpConfirmationForm`, a single confirmation-code field with its own pending/disabled/loading UI (Requirement 12.9, 12.17). Submitting a non-empty code calls `confirmSignUp(username, code)`, which wraps `CognitoUser.prototype.confirmRegistration` with the same 10-second timeout pattern, resolving on success or rejecting with `{ kind: 'INVALID_CODE' | 'TIMEOUT_OR_UNREACHABLE' }` (Requirement 12.10, 12.15, 12.16).
+- On successful confirmation, `SignUpPage` shows a brief success indication and calls the `onSignUpComplete` callback prop — it does not navigate itself, matching the callback-prop-driven pattern `LoginPage`/`MapPage`/`TopNav` already use with `AuthGate`. `AuthGate` wires `onSignUpComplete` to navigate back to `LoginPage`. Critically, neither `signUp()` nor `confirmSignUp()` ever touches `useSession` — sign-up and confirmation only create and confirm the Cognito account; they never authenticate it, so Requirement 1's existing login flow remains the only path that creates a Session (Requirement 12.12).
 
 ### LoginPromptBanner
 
@@ -482,6 +496,18 @@ For any sequence of hover (mousemove/mouseout) events on a hover-capable device,
 
 **Validates: Requirements 10.9**
 
+### Property 24: Sign-up field validation accepts only well-formed, non-empty input
+
+For any generated username, email, password, and password-confirmation strings, `validateSignUpFields(username, email, password, confirmPassword)` accepts if and only if all four are non-empty after trimming, within their maximum lengths (username ≤ 128, email ≤ 254, password and confirmPassword ≤ 256 characters), `email` looks like a well-formed email address, and `password` equals `confirmPassword` after trimming; otherwise it rejects with the corresponding required-fields, length, invalid-email, or password-mismatch reason.
+
+**Validates: Requirements 12.4, 12.5, 12.6, 12.7**
+
+### Property 25: Successful sign-up and confirmation never creates a Session
+
+For any valid sign-up fields and any Cognito outcome in which both `signUp()` and `confirmSignUp()` succeed, applying the sign-up and confirmation handlers to any prior `Session` value (including null) always leaves `Session` unchanged, and never a newly populated Session — only Requirement 1's login flow can transition `Session` from null to non-null.
+
+**Validates: Requirements 12.12**
+
 ## Error Handling
 
 | Failure | Detection | Front-end behavior | Requirement |
@@ -501,9 +527,9 @@ For any sequence of hover (mousemove/mouseout) events on a hover-capable device,
 
 **Language/tooling**: JavaScript (JSX), Jest as the test runner, React Testing Library for component-level unit/integration tests, and `fast-check` as the property-based testing library (minimum 100 runs per property, configured via `fc.assert(fc.property(...), { numRuns: 100 })`). Each property test is tagged in a comment referencing its design property, e.g. `// Feature: state-visit-tracker, Property 7: Region hit-testing resolves clicks to exactly the containing region, or none`.
 
-**Property tests** cover the 22 properties above, exercised against the pure functions they name (`validateCredentials`, the login/logout/session-clearing handlers, `resolveRegionAtLatLng`, `handleStateBoundaryClick`, `resolveFillColor`, the Visit_Record_API client's header/short-circuit behavior (list and save, with `visited: true`/`false`) with a mocked `fetch`, `shouldShowLoginPrompt`, `computeInfoPanelContent`, `partitionRegionsByVisited`). None of these require a live Google Maps instance, a live Cognito pool, or a live Visit_Record_API — all external calls are mocked at the `fetch` / Cognito SDK boundary, keeping iteration cost low.
+**Property tests** cover the 25 properties above, exercised against the pure functions they name (`validateCredentials`, `validateSignUpFields`, the login/logout/session-clearing handlers, `resolveRegionAtLatLng`, `handleStateBoundaryClick`, `resolveFillColor`, the Visit_Record_API client's header/short-circuit behavior (list and save, with `visited: true`/`false`) with a mocked `fetch`, `shouldShowLoginPrompt`, `computeInfoPanelContent`, `partitionRegionsByVisited`). None of these require a live Google Maps instance, a live Cognito pool, or a live Visit_Record_API — all external calls are mocked at the `fetch` / Cognito SDK boundary, keeping iteration cost low.
 
-**Unit/example tests** cover the scenarios identified as EXAMPLE in the acceptance-criteria prework: default view and login-control visibility (1.1, 1.2), loading/disabled-state UI during login (1.10), the specific invalid-credentials and timeout error messages (1.8, 1.9), the fixed initial map viewport and exactly-51-regions data integrity check (3.1, 3.2), map-script and runtime boundary-fetch loading/error/retry UI, including the combined loading indicator and per-source retry behavior, with `fetch` mocked at the component level (3.3, 3.4), the 10-second timeout behavior for the initial visited-states load and its retry control (4.1, 4.2, 4.4, 4.5), the sign-out-reason wording distinction (2.4), color-update timing after a state change (6.2), the fixed (non-tooltip) positioning of the State_Info_Panel (10.1), the hovered State_Boundary's border-thickness change and its restoration on mouseout or hover-target change, including confirming it never occurs on touch-only devices (10.9), and smoke tests confirming the Google Maps script loads and both a map and the region overlay are actually constructed (8.2, 8.3, 8.4).
+**Unit/example tests** cover the scenarios identified as EXAMPLE in the acceptance-criteria prework: default view and login-control visibility (1.1, 1.2), loading/disabled-state UI during login (1.10), the specific invalid-credentials and timeout error messages (1.8, 1.9), the fixed initial map viewport and exactly-51-regions data integrity check (3.1, 3.2), map-script and runtime boundary-fetch loading/error/retry UI, including the combined loading indicator and per-source retry behavior, with `fetch` mocked at the component level (3.3, 3.4), the 10-second timeout behavior for the initial visited-states load and its retry control (4.1, 4.2, 4.4, 4.5), the sign-out-reason wording distinction (2.4), color-update timing after a state change (6.2), the fixed (non-tooltip) positioning of the State_Info_Panel (10.1), the hovered State_Boundary's border-thickness change and its restoration on mouseout or hover-target change, including confirming it never occurs on touch-only devices (10.9), smoke tests confirming the Google Maps script loads and both a map and the region overlay are actually constructed (8.2, 8.3, 8.4), and the Sign_Up_Page/SignUpForm/SignUpConfirmationForm UI flow: the Login_Page sign-up link (12.1), the two-step fields-to-confirmation-code transition and its loading/disabled UI (12.9, 12.17), and each of the sign-up and confirmation error messages — username-taken, invalid-password, invalid/expired-code, and timeout/unreachable (12.13, 12.14, 12.15, 12.16).
 
 **Integration tests** cover end-to-end wiring across the mocked API boundary: successful login followed by the Requirement 4 load populating the map (1.6/1.7 combined), and a guest's local marks persisting only in memory across a re-render without any Visit_Record_API calls (9.1/9.4 combined).
 

@@ -137,3 +137,35 @@ describe('LoginPage - timeout/unreachable message (Requirement 1.9)', () => {
     expect(screen.getByRole('button', { name: /log in/i })).not.toBeDisabled();
   });
 });
+
+describe('LoginPage - sign-up success message', () => {
+  it('renders the successMessage prop above the username field when provided', () => {
+    render(<LoginPage successMessage="Your confirmation code was verified. You can now log in." />);
+
+    const message = screen.getByTestId('login-success-message');
+    expect(message).toHaveTextContent('Your confirmation code was verified. You can now log in.');
+
+    const usernameField = screen.getByLabelText(/username/i);
+    expect(message.compareDocumentPosition(usernameField) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('does not render a success message when the prop is omitted', () => {
+    render(<LoginPage />);
+
+    expect(screen.queryByTestId('login-success-message')).not.toBeInTheDocument();
+  });
+});
+
+describe('LoginPage - sign-up link (Requirement 12.1)', () => {
+  it('renders a sign-up link and calls onRequestSignUp when clicked', () => {
+    const onRequestSignUp = jest.fn();
+    render(<LoginPage onRequestSignUp={onRequestSignUp} />);
+
+    const signUpLink = screen.getByTestId('signup-link');
+    expect(signUpLink).toBeInTheDocument();
+
+    fireEvent.click(signUpLink);
+
+    expect(onRequestSignUp).toHaveBeenCalledTimes(1);
+  });
+});

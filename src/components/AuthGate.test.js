@@ -24,7 +24,29 @@ jest.mock('./MapPage', () => ({
   MapPage: () => <div data-testid="mock-map-page" />,
 }));
 jest.mock('./LoginPage', () => ({
-  LoginPage: () => <div data-testid="mock-login-page" />,
+  LoginPage: ({ onRequestSignUp, successMessage }) => (
+    <div data-testid="mock-login-page">
+      {successMessage ? (
+        <div data-testid="mock-login-success-message">{successMessage}</div>
+      ) : null}
+      <button type="button" onClick={onRequestSignUp} data-testid="mock-signup-link">
+        Sign up
+      </button>
+    </div>
+  ),
+}));
+jest.mock('./SignUpPage', () => ({
+  SignUpPage: ({ onSignUpComplete }) => (
+    <div data-testid="mock-signup-page">
+      <button
+        type="button"
+        onClick={() => onSignUpComplete('some test message')}
+        data-testid="mock-signup-complete"
+      >
+        Complete sign up
+      </button>
+    </div>
+  ),
 }));
 jest.mock('./TopNav', () => ({
   TopNav: ({ onRequestLogin }) => (
@@ -45,6 +67,13 @@ function ResetSession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return null;
+}
+
+function SessionProbeForSignUp() {
+  const [session] = useSession();
+  return (
+    <div data-testid="session-probe-signup">{session ? 'has-session' : 'no-session'}</div>
+  );
 }
 
 function SessionSetter() {
@@ -109,5 +138,70 @@ describe('AuthGate', () => {
 
     expect(screen.getByTestId('mock-map-page')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-login-page')).not.toBeInTheDocument();
+  });
+
+  it('navigates Login_Page -> Sign_Up_Page -> back to Login_Page on onSignUpComplete, without ever setting useSession (Requirement 12.1, 12.2, 12.7)', () => {
+    render(
+      <>
+        <AuthGate />
+        <SessionProbeForSignUp />
+      </>
+    );
+
+    // Login_Page -> Sign_Up_Page, via LoginPage's sign-up link.
+    fireEvent.click(screen.getByTestId('mock-login-control'));
+    fireEvent.click(screen.getByTestId('mock-signup-link'));
+
+    expect(screen.getByTestId('mock-signup-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('mock-login-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mock-map-page')).not.toBeInTheDocument();
+
+    // Sign_Up_Page -> Login_Page, via onSignUpComplete.
+    fireEvent.click(screen.getByTestId('mock-signup-complete'));
+
+    expect(screen.getByTestId('mock-login-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('mock-signup-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mock-map-page')).not.toBeInTheDocument();
+
+    // Requirement 12.7: sign-up + confirmation never creates a Session.
+    expect(screen.getByTestId('session-probe-signup')).toHaveTextContent('no-session');
+
+    // The message passed to onSignUpComplete reaches LoginPage.
+    expect(screen.getByTestId('mock-login-success-message')).toHaveTextContent(
+      'some test message'
+    );
+  });
+
+  it('clears the sign-up success message once a subsequent login succeeds', () => {
+    render(
+      <>
+        <AuthGate />
+        <SessionSetter />
+      </>
+    );
+
+    // Login_Page -> Sign_Up_Page -> back to Login_Page, with a message.
+    fireEvent.click(screen.getByTestId('mock-login-control'));
+    fireEvent.click(screen.getByTestId('mock-signup-link'));
+    fireEvent.click(screen.getByTestId('mock-signup-complete'));
+
+    expect(screen.getByTestId('mock-login-success-message')).toHaveTextContent(
+      'some test message'
+    );
+
+    // A successful login clears the message and returns to MapPage.
+    act(() => {
+      fireEvent.click(screen.getByTestId('set-session'));
+    });
+
+    expect(screen.getByTestId('mock-map-page')).toBeInTheDocument();
+
+    // Log back in to inspect LoginPage's props again -- the message
+    // should no longer be present since a successful login already
+    // cleared it.
+    act(() => {
+      fireEvent.click(screen.getByTestId('mock-login-control'));
+    });
+    expect(screen.queryByTestId('mock-login-success-message')).not.toBeInTheDocument();
   });
 });

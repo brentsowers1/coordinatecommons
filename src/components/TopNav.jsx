@@ -4,11 +4,11 @@
 // Renders three controls:
 //   - "Coordinate Commons" (home): always rendered, regardless of session
 //     state. Calls `onNavigateHome` when clicked -- `AuthGate` is the sole
-//     owner of the `showLoginPage` navigation-state boolean, so this
+//     owner of the `currentPage` navigation-state enum, so this
 //     control never touches that state directly; it just asks the parent
-//     to navigate home (`() => setShowLoginPage(false)`, per AuthGate.jsx).
+//     to navigate home (`() => setCurrentPage('map')`, per AuthGate.jsx).
 //   - "Log in": rendered only when there is no session. Calls
-//     `onRequestLogin` when clicked (`() => setShowLoginPage(true)`, per
+//     `onRequestLogin` when clicked (`() => setCurrentPage('login')`, per
 //     AuthGate.jsx). This replaces MapPage's former inline login control.
 //   - "Log out": rendered only when there IS a session. Unlike the other
 //     two controls, logout doesn't need a callback from the parent --

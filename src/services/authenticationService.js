@@ -16,15 +16,40 @@ import {
   CognitoUser,
   CognitoUserPool,
   AuthenticationDetails,
+  CognitoUserAttribute,
 } from 'amazon-cognito-identity-js';
 import { config } from '../config';
 
 const MAX_USERNAME_LENGTH = 128;
 const MAX_PASSWORD_LENGTH = 256;
 
+// Requirement 12.3/12.4: practical upper bounds for the two Sign_Up_Page
+// fields that don't already have a limit defined by Requirement 1. 254 is
+// the practical maximum total length of an RFC 5321 email address; 128
+// mirrors MAX_USERNAME_LENGTH as a reasonable bound for the free-text
+// `custom:location` attribute (there is no Cognito-imposed limit known to
+// this app, so this is this app's own choice, not a pool constraint).
+const MAX_EMAIL_LENGTH = 254;
+const MAX_LOCATION_LENGTH = 128;
+
 // Requirement 1.5/1.9: the whole authentication attempt (Cognito round trip)
 // must complete within this window or be treated as unreachable/timed out.
 const LOGIN_TIMEOUT_MS = 10000;
+
+// Requirement 12.4/12.7: sign-up and confirmation each get the same
+// 10-second timeout budget as login (Requirement 1.5/1.9), for the same
+// reason -- an unreachable/slow Cognito pool must not hang the UI
+// indefinitely.
+const SIGN_UP_TIMEOUT_MS = 10000;
+const CONFIRM_SIGN_UP_TIMEOUT_MS = 10000;
+
+// A pragmatic, non-RFC-5322 "does this look like an email" check: requires
+// a non-whitespace local part, an '@', and a non-whitespace domain part
+// containing at least one '.'. This intentionally under-validates rather
+// than over-validates -- Cognito itself is the final authority on whether
+// an email is acceptable; this is purely to catch obviously-wrong input
+// before spending a round trip (Requirement 12.4).
+const SIMPLE_EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 
 let cachedUserPool = null;
 
@@ -171,4 +196,217 @@ export async function login(username, password) {
   }
 }
 
-export { MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH };
+/**
+ * Pure validation function for the Sign_Up_Page fields (Requirement 12.3,
+ * 12.4). Does not call Cognito or any other service, and does not validate
+ * `location` -- it is optional and this app applies no required/format
+ * validation to it beyond what `signUp()` itself does defensively (see
+ * below).
+ *
+ * Trims `username`, `email`, `password`, and `confirmPassword` before
+ * checking emptiness. Checks are applied in this order, returning on the
+ * first that fails:
+ *   1. 'REQUIRED' - any of the four trims to empty.
+ *   2. 'TOO_LONG' - username/email/password exceeds its max length
+ *      (MAX_USERNAME_LENGTH / MAX_EMAIL_LENGTH / MAX_PASSWORD_LENGTH).
+ *      `confirmPassword` is checked against MAX_PASSWORD_LENGTH too, since
+ *      it is expected to equal `password` when correct.
+ *   3. 'INVALID_EMAIL' - `email` doesn't look like an email address.
+ *   4. 'PASSWORD_MISMATCH' - `password` !== `confirmPassword` (compared
+ *      after trimming, consistent with how both are otherwise handled).
+ * Otherwise accepts.
+ *
+ * @param {string} username
+ * @param {string} email
+ * @param {string} password
+ * @param {string} confirmPassword
+ * @returns {{ valid: true } | { valid: false, reason: 'REQUIRED' | 'TOO_LONG' | 'INVALID_EMAIL' | 'PASSWORD_MISMATCH' }}
+ */
+export function validateSignUpFields(username, email, password, confirmPassword) {
+  const trimmedUsername = typeof username === 'string' ? username.trim() : '';
+  const trimmedEmail = typeof email === 'string' ? email.trim() : '';
+  const trimmedPassword = typeof password === 'string' ? password.trim() : '';
+  const trimmedConfirmPassword =
+    typeof confirmPassword === 'string' ? confirmPassword.trim() : '';
+
+  if (
+    trimmedUsername.length === 0 ||
+    trimmedEmail.length === 0 ||
+    trimmedPassword.length === 0 ||
+    trimmedConfirmPassword.length === 0
+  ) {
+    return { valid: false, reason: 'REQUIRED' };
+  }
+
+  if (
+    trimmedUsername.length > MAX_USERNAME_LENGTH ||
+    trimmedEmail.length > MAX_EMAIL_LENGTH ||
+    trimmedPassword.length > MAX_PASSWORD_LENGTH ||
+    trimmedConfirmPassword.length > MAX_PASSWORD_LENGTH
+  ) {
+    return { valid: false, reason: 'TOO_LONG' };
+  }
+
+  if (!SIMPLE_EMAIL_PATTERN.test(trimmedEmail)) {
+    return { valid: false, reason: 'INVALID_EMAIL' };
+  }
+
+  if (trimmedPassword !== trimmedConfirmPassword) {
+    return { valid: false, reason: 'PASSWORD_MISMATCH' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Attempts to create a new account in the configured Cognito user pool
+ * (Requirement 12.5).
+ *
+ * Builds the Cognito attribute list with `email` always included, and
+ * `custom:location` included only when `location` is a non-empty string
+ * after trimming (Requirement 12.3 - location is optional).
+ *
+ * Resolves with `{ username }` on success (the trimmed username that was
+ * registered) -- the app has no further use for the `CognitoUser`/
+ * `userSub`/`codeDeliveryDetails` values Cognito's callback provides.
+ *
+ * Rejects with one of (never leaking raw Cognito errors, matching the
+ * `login()`/Requirement 8.5 convention):
+ *   { kind: 'USERNAME_EXISTS' }        - Cognito UsernameExistsException
+ *   { kind: 'INVALID_PASSWORD' }       - Cognito InvalidPasswordException
+ *   { kind: 'TIMEOUT_OR_UNREACHABLE' } - anything else, or no response
+ *                                         within SIGN_UP_TIMEOUT_MS
+ *
+ * @param {string} username
+ * @param {string} email
+ * @param {string} password
+ * @param {string} [location]
+ * @returns {Promise<{ username: string }>}
+ */
+export async function signUp(username, email, password, location) {
+  // Defensive validation (see login()'s analogous comment): SignUpForm
+  // already blocks submission via validateSignUpFields before this is ever
+  // called (mirroring how LoginForm blocks on validateCredentials), so this
+  // only guards against direct/misuse calls. Requirement 12 defines
+  // USERNAME_EXISTS/INVALID_PASSWORD/TIMEOUT_OR_UNREACHABLE as signUp()'s
+  // rejection kinds; INVALID_PASSWORD is the closest fit for "the submitted
+  // fields are not acceptable," keeping this function's contract limited to
+  // those three kinds.
+  const validation = validateSignUpFields(username, email, password, password);
+  if (!validation.valid) {
+    throw { kind: 'INVALID_PASSWORD' };
+  }
+
+  const trimmedUsername = username.trim();
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+  const trimmedLocation = typeof location === 'string' ? location.trim() : '';
+
+  const attributeList = [
+    new CognitoUserAttribute({ Name: 'email', Value: trimmedEmail }),
+  ];
+  if (trimmedLocation.length > 0) {
+    attributeList.push(
+      new CognitoUserAttribute({ Name: 'custom:location', Value: trimmedLocation })
+    );
+  }
+
+  const signUpPromise = new Promise((resolve, reject) => {
+    getUserPool().signUp(
+      trimmedUsername,
+      trimmedPassword,
+      attributeList,
+      null,
+      (err) => {
+        if (err) {
+          // Requirement 8.5-style convention: never surface raw Cognito
+          // errors. Known, actionable codes get their own kind; anything
+          // else (network failure, service outage, unexpected shape) is
+          // treated as unreachable.
+          const code = err && err.code;
+          if (code === 'UsernameExistsException') {
+            reject({ kind: 'USERNAME_EXISTS' });
+          } else if (code === 'InvalidPasswordException') {
+            reject({ kind: 'INVALID_PASSWORD' });
+          } else {
+            reject({ kind: 'TIMEOUT_OR_UNREACHABLE' });
+          }
+          return;
+        }
+        resolve({ username: trimmedUsername });
+      }
+    );
+  });
+
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject({ kind: 'TIMEOUT_OR_UNREACHABLE' });
+    }, SIGN_UP_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([signUpPromise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Confirms a newly created Cognito account using the confirmation code sent
+ * to the user's email (Requirement 12.6).
+ *
+ * Resolves with `true` on success. Rejects with one of:
+ *   { kind: 'INVALID_CODE' }           - Cognito CodeMismatchException /
+ *                                         ExpiredCodeException
+ *   { kind: 'TIMEOUT_OR_UNREACHABLE' } - anything else, or no response
+ *                                         within CONFIRM_SIGN_UP_TIMEOUT_MS
+ *
+ * @param {string} username
+ * @param {string} confirmationCode
+ * @returns {Promise<true>}
+ */
+export async function confirmSignUp(username, confirmationCode) {
+  const trimmedUsername = typeof username === 'string' ? username.trim() : '';
+  const trimmedCode = typeof confirmationCode === 'string' ? confirmationCode.trim() : '';
+
+  const cognitoUser = new CognitoUser({
+    Username: trimmedUsername,
+    Pool: getUserPool(),
+  });
+
+  const confirmPromise = new Promise((resolve, reject) => {
+    cognitoUser.confirmRegistration(trimmedCode, true, (err) => {
+      if (err) {
+        const code = err && err.code;
+        if (code === 'CodeMismatchException' || code === 'ExpiredCodeException') {
+          reject({ kind: 'INVALID_CODE' });
+        } else {
+          reject({ kind: 'TIMEOUT_OR_UNREACHABLE' });
+        }
+        return;
+      }
+      resolve(true);
+    });
+  });
+
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject({ kind: 'TIMEOUT_OR_UNREACHABLE' });
+    }, CONFIRM_SIGN_UP_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([confirmPromise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export {
+  MAX_USERNAME_LENGTH,
+  MAX_PASSWORD_LENGTH,
+  MAX_EMAIL_LENGTH,
+  MAX_LOCATION_LENGTH,
+};

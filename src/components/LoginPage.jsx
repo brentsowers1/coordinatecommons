@@ -34,6 +34,27 @@
 // Since nothing downstream of `onSubmit` needs its rejection, `onSubmit`
 // here catches every `login()`/`handleLoginSuccess` failure itself (so it
 // can set `errorMessage`) and lets its returned promise resolve either way.
+//
+// Sign-up link (Requirement 12.1): renders a "Sign up" link below
+// `LoginForm` for visitors without an account, calling the `onRequestSignUp`
+// callback prop on click -- `LoginPage` has no navigation concept of its
+// own (see above), so this mirrors the same callback-prop-driven pattern
+// `MapPage`/`TopNav` already use with `AuthGate`, and uses the same
+// `<a href="#">` + `preventDefault()` link-styled-action pattern
+// `TopNav.jsx` established for this router-less SPA.
+//
+// Sign-up success message (`successMessage` prop): after a visitor
+// completes Sign_Up_Page's confirmation step, `AuthGate` navigates back to
+// Login_Page AND passes along a message confirming the code was verified
+// and the visitor can now log in (see SignUpPage.jsx's `onSignUpComplete`
+// and AuthGate.jsx's own comment for the full lifecycle). `LoginPage` has
+// no memory of its own for this -- it's parent-controlled, unlike
+// `errorMessage` below, which is `LoginPage`'s own state for a failed
+// *login* attempt (Requirements 1.8/1.9). The two are rendered
+// independently and are not conflated: `successMessage` (when present) is
+// rendered above `LoginForm` (i.e. above the username field), using
+// `role="status"` to match this app's existing convention for positive/
+// informational (non-error) messages (see `LoginPromptBanner.jsx`).
 
 import React from 'react';
 import { LoginForm } from './LoginForm';
@@ -44,7 +65,17 @@ import { useSession, useVisitedStateIds } from '../state/sharedState';
 const INVALID_CREDENTIALS_MESSAGE = 'The username or password is invalid.';
 const TIMEOUT_MESSAGE = 'The login attempt could not be completed. Please try again.';
 
-export function LoginPage() {
+/**
+ * @param {Object} props
+ * @param {() => void} [props.onRequestSignUp] - called when the "Sign up"
+ *   link is clicked (Requirement 12.1). Optional so existing callers/tests
+ *   that don't care about sign-up navigation don't need to pass it.
+ * @param {string | null} [props.successMessage] - a message to display
+ *   above the username field, e.g. after a successful sign-up
+ *   confirmation. Parent-controlled (see the module-level comment above);
+ *   renders nothing when null/omitted.
+ */
+export function LoginPage({ onRequestSignUp, successMessage = null } = {}) {
   const [, setSession] = useSession();
   const [, setVisitedStateIds] = useVisitedStateIds();
   const [errorMessage, setErrorMessage] = React.useState(null);
@@ -77,5 +108,26 @@ export function LoginPage() {
     }
   }
 
-  return <LoginForm onSubmit={handleSubmit} errorMessage={errorMessage} />;
+  function handleSignUpClick(event) {
+    event.preventDefault();
+    if (onRequestSignUp) {
+      onRequestSignUp();
+    }
+  }
+
+  return (
+    <>
+      {successMessage ? (
+        <p role="status" data-testid="login-success-message">
+          {successMessage}
+        </p>
+      ) : null}
+      <LoginForm onSubmit={handleSubmit} errorMessage={errorMessage} />
+      <p>
+        <a href="#" onClick={handleSignUpClick} data-testid="signup-link">
+          Sign up
+        </a>
+      </p>
+    </>
+  );
 }
