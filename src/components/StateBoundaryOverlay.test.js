@@ -7,7 +7,11 @@ import React from 'react';
 import fc from 'fast-check';
 import { render, act, cleanup } from '@testing-library/react';
 
-import { StateBoundaryOverlay } from './StateBoundaryOverlay';
+import {
+  StateBoundaryOverlay,
+  DEFAULT_STROKE_WEIGHT,
+  HOVERED_STROKE_WEIGHT,
+} from './StateBoundaryOverlay';
 import { useInfoPanelStateId, useVisitedStateIds } from '../state/sharedState';
 import { VISITED_FILL_COLOR, NOT_VISITED_FILL_COLOR } from './resolveFillColor';
 
@@ -215,6 +219,49 @@ describe('StateBoundaryOverlay - smoke test', () => {
       .filter((fillColor) => fillColor !== NOT_VISITED_FILL_COLOR);
     expect(nvFillColorCalls).toHaveLength(0);
   });
+
+  it('thickens the hovered region border on mousemove and restores it on mouseout (Requirement 10.9)', () => {
+    const polygons = setUpFakeGoogleMaps();
+    const map = makeFakeMap();
+
+    render(<StateBoundaryOverlay map={map} regions={REGIONS} />);
+
+    const [caPolygon] = polygons;
+
+    act(() => {
+      map.trigger('mousemove', { latLng: { lat: 0, lng: 0 } });
+    });
+    expect(caPolygon.setOptions).toHaveBeenCalledWith({ strokeWeight: HOVERED_STROKE_WEIGHT });
+
+    act(() => {
+      map.trigger('mouseout', {});
+    });
+    expect(caPolygon.setOptions).toHaveBeenCalledWith({ strokeWeight: DEFAULT_STROKE_WEIGHT });
+  });
+
+  it('un-thickens the previous region and thickens the new region when the mouse moves directly between regions', () => {
+    const polygons = setUpFakeGoogleMaps();
+    const map = makeFakeMap();
+
+    render(<StateBoundaryOverlay map={map} regions={REGIONS} />);
+
+    const [caPolygon, nvPolygon] = polygons;
+
+    act(() => {
+      map.trigger('mousemove', { latLng: { lat: 0, lng: 0 } }); // hits CA
+    });
+    expect(caPolygon.setOptions).toHaveBeenCalledWith({ strokeWeight: HOVERED_STROKE_WEIGHT });
+
+    caPolygon.setOptions.mockClear();
+    nvPolygon.setOptions.mockClear();
+
+    act(() => {
+      map.trigger('mousemove', { latLng: { lat: 25, lng: 25 } }); // hits NV directly
+    });
+
+    expect(caPolygon.setOptions).toHaveBeenCalledWith({ strokeWeight: DEFAULT_STROKE_WEIGHT });
+    expect(nvPolygon.setOptions).toHaveBeenCalledWith({ strokeWeight: HOVERED_STROKE_WEIGHT });
+  });
 });
 
 describe('StateBoundaryOverlay - Property 21 (touch-only devices)', () => {
@@ -270,5 +317,25 @@ describe('StateBoundaryOverlay - Property 21 (touch-only devices)', () => {
       }),
       { numRuns: 100 }
     );
+  });
+
+  it('never changes any polygon strokeWeight on mousemove/mouseout, on hover-incapable devices (Requirement 10.9)', () => {
+    const polygons = setUpFakeGoogleMaps();
+    const map = makeFakeMap();
+
+    render(<StateBoundaryOverlay map={map} regions={REGIONS} />);
+
+    act(() => {
+      map.trigger('mousemove', { latLng: REGION_POINTS.CA });
+      map.trigger('mousemove', { latLng: REGION_POINTS.NV });
+      map.trigger('mouseout', {});
+    });
+
+    polygons.forEach((polygon) => {
+      const strokeWeightCalls = polygon.setOptions.mock.calls.filter(
+        ([options]) => Object.prototype.hasOwnProperty.call(options, 'strokeWeight')
+      );
+      expect(strokeWeightCalls).toHaveLength(0);
+    });
   });
 });

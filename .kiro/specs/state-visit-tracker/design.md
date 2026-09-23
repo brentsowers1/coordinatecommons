@@ -257,7 +257,7 @@ function resolveRegionAtLatLng(latLng, regions) { /* ray-casting point-in-polygo
 - Renders each region as a `google.maps.Polygon`, with fill color derived from `resolveFillColor(stateId, visitedStateIds)` (Property 14).
 - Registers exactly one `click` and one `mousemove`/`mouseout` listener on the `Map` object (not per-polygon), converts the event's `latLng` via `resolveRegionAtLatLng`, and:
   - on click: invokes the toggle handler described below if a region was hit; does nothing otherwise (3.6).
-  - on mousemove: updates `useInfoPanelStateId` when the hit region changes; on mouseout (or moving to no region), clears it unless the device is touch-only (10.8 — see StateInfoPanel).
+  - on mousemove: updates `useInfoPanelStateId` when the hit region changes; on mouseout (or moving to no region), clears it unless the device is touch-only (10.8 — see StateInfoPanel); also updates the hovered State_Boundary's border to a thicker stroke weight, restoring the previous border weight when the hover target changes or clears (Requirement 10.9).
 
 #### Toggle Handler (`handleStateBoundaryClick`)
 
@@ -476,6 +476,12 @@ For any list of loaded regions and any `visitedStateIds` map, `partitionRegionsB
 
 **Validates: Requirements 11.2, 11.3**
 
+### Property 23: The hovered region's border is thicker than every other region's border, and only on hover-capable devices
+
+For any sequence of hover (mousemove/mouseout) events on a hover-capable device, at most one region's polygon has the thickened stroke weight at any time -- exactly the currently hovered region's, if any -- and every other region's polygon has the default stroke weight; on a hover-incapable (touch-only) device, no region's polygon ever receives the thickened stroke weight regardless of pointer movement.
+
+**Validates: Requirements 10.9**
+
 ## Error Handling
 
 | Failure | Detection | Front-end behavior | Requirement |
@@ -497,7 +503,7 @@ For any list of loaded regions and any `visitedStateIds` map, `partitionRegionsB
 
 **Property tests** cover the 22 properties above, exercised against the pure functions they name (`validateCredentials`, the login/logout/session-clearing handlers, `resolveRegionAtLatLng`, `handleStateBoundaryClick`, `resolveFillColor`, the Visit_Record_API client's header/short-circuit behavior (list and save, with `visited: true`/`false`) with a mocked `fetch`, `shouldShowLoginPrompt`, `computeInfoPanelContent`, `partitionRegionsByVisited`). None of these require a live Google Maps instance, a live Cognito pool, or a live Visit_Record_API — all external calls are mocked at the `fetch` / Cognito SDK boundary, keeping iteration cost low.
 
-**Unit/example tests** cover the scenarios identified as EXAMPLE in the acceptance-criteria prework: default view and login-control visibility (1.1, 1.2), loading/disabled-state UI during login (1.10), the specific invalid-credentials and timeout error messages (1.8, 1.9), the fixed initial map viewport and exactly-51-regions data integrity check (3.1, 3.2), map-script and runtime boundary-fetch loading/error/retry UI, including the combined loading indicator and per-source retry behavior, with `fetch` mocked at the component level (3.3, 3.4), the 10-second timeout behavior for the initial visited-states load and its retry control (4.1, 4.2, 4.4, 4.5), the sign-out-reason wording distinction (2.4), color-update timing after a state change (6.2), the fixed (non-tooltip) positioning of the State_Info_Panel (10.1), and smoke tests confirming the Google Maps script loads and both a map and the region overlay are actually constructed (8.2, 8.3, 8.4).
+**Unit/example tests** cover the scenarios identified as EXAMPLE in the acceptance-criteria prework: default view and login-control visibility (1.1, 1.2), loading/disabled-state UI during login (1.10), the specific invalid-credentials and timeout error messages (1.8, 1.9), the fixed initial map viewport and exactly-51-regions data integrity check (3.1, 3.2), map-script and runtime boundary-fetch loading/error/retry UI, including the combined loading indicator and per-source retry behavior, with `fetch` mocked at the component level (3.3, 3.4), the 10-second timeout behavior for the initial visited-states load and its retry control (4.1, 4.2, 4.4, 4.5), the sign-out-reason wording distinction (2.4), color-update timing after a state change (6.2), the fixed (non-tooltip) positioning of the State_Info_Panel (10.1), the hovered State_Boundary's border-thickness change and its restoration on mouseout or hover-target change, including confirming it never occurs on touch-only devices (10.9), and smoke tests confirming the Google Maps script loads and both a map and the region overlay are actually constructed (8.2, 8.3, 8.4).
 
 **Integration tests** cover end-to-end wiring across the mocked API boundary: successful login followed by the Requirement 4 load populating the map (1.6/1.7 combined), and a guest's local marks persisting only in memory across a re-render without any Visit_Record_API calls (9.1/9.4 combined).
 

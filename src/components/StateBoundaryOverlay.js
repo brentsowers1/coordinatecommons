@@ -9,7 +9,10 @@
 //     object (not per-polygon), updating `useInfoPanelStateId` on
 //     hover-capable devices (Requirement 3.5, 6.2's prerequisite, 10.8's
 //     hover-capable branch handled by `StateInfoPanel`'s
-//     `useIsHoverCapable()`).
+//     `useIsHoverCapable()`), and also thickening the hovered
+//     State_Boundary's border (restoring the previous border's weight when
+//     the hover target changes or clears), on the same hover-capable-only
+//     path (Requirement 10.9).
 //   - exactly one `click` listener on the `Map` object that resolves the
 //     hit region and, on touch-only (hover-incapable) devices, sets
 //     `useInfoPanelStateId` directly from the click (Requirement 10.8's
@@ -31,6 +34,16 @@ import { useVisitedStateIds, useInfoPanelStateId } from '../state/sharedState';
 import { resolveFillColor } from './resolveFillColor';
 import { resolveRegionAtLatLng } from '../data/stateBoundaries';
 import { useIsHoverCapable } from './StateInfoPanel';
+
+// Default stroke (border) weight for an unhovered State_Boundary polygon --
+// extracted as a named constant now that a second stroke-weight value
+// exists (matches the previously hardcoded `strokeWeight: 1`).
+export const DEFAULT_STROKE_WEIGHT = 1;
+
+// Stroke (border) weight for the currently hovered State_Boundary polygon
+// (Requirement 10.9). 3x the default -- visibly thicker without looking
+// cartoonish.
+export const HOVERED_STROKE_WEIGHT = 3;
 
 /**
  * Converts one ring of `[lng, lat]` pairs (the `Region.polygons` shape,
@@ -125,7 +138,7 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
         fillOpacity: 0.6,
         strokeColor: '#000000',
         strokeOpacity: 0.8,
-        strokeWeight: 1,
+        strokeWeight: DEFAULT_STROKE_WEIGHT,
         // A clickable Polygon (the Maps API default) intercepts click
         // events itself, preventing them from ever reaching the map's own
         // click listener registered below. Since this design deliberately
@@ -145,6 +158,19 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
       }
       const hitStateId = resolveRegionAtLatLng(event.latLng, regionsRef.current);
       if (hitStateId !== lastHoveredStateIdRef.current) {
+        // Requirement 10.9: un-thicken the previously hovered region's
+        // border and thicken the newly hovered region's border, via
+        // setOptions on the existing polygons (no recreation), mirroring
+        // the fillColor-update effect's imperative style.
+        const previousPolygon = polygonsByStateIdRef.current[lastHoveredStateIdRef.current];
+        if (previousPolygon) {
+          previousPolygon.setOptions({ strokeWeight: DEFAULT_STROKE_WEIGHT });
+        }
+        const nextPolygon = polygonsByStateIdRef.current[hitStateId];
+        if (nextPolygon) {
+          nextPolygon.setOptions({ strokeWeight: HOVERED_STROKE_WEIGHT });
+        }
+
         lastHoveredStateIdRef.current = hitStateId;
         setInfoPanelStateIdRef.current(hitStateId);
       }
@@ -153,6 +179,10 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
     function handleMouseOut() {
       if (!isHoverCapableRef.current) {
         return;
+      }
+      const previousPolygon = polygonsByStateIdRef.current[lastHoveredStateIdRef.current];
+      if (previousPolygon) {
+        previousPolygon.setOptions({ strokeWeight: DEFAULT_STROKE_WEIGHT });
       }
       lastHoveredStateIdRef.current = null;
       setInfoPanelStateIdRef.current(null);

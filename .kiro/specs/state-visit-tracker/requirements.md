@@ -155,6 +155,7 @@ This feature is the front-end for a browser-based React web application called t
 6. WHEN the visited status of the currently hovered State_Boundary changes in the Shared_State_Store, THE State_Info_Panel SHALL update the displayed visited status to match, without requiring the user to move the mouse.
 7. THE State_Info_Panel SHALL be usable by both authenticated and unauthenticated users, per Requirement 9.
 8. IF the user's input device does not support hover (e.g., touch-only), THEN THE State_Info_Panel SHALL display the name and visited status of the most recently clicked State_Boundary instead of relying on hover.
+9. WHEN a user moves the mouse pointer over a State_Boundary, THE Map_View SHALL render that State_Boundary's border at a visibly thicker weight than an unhovered State_Boundary's border, and SHALL restore the border to its normal weight once the pointer moves off it.
 
 ### Requirement 11: Visited and Unvisited States List
 
