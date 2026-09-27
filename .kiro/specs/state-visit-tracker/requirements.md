@@ -9,8 +9,11 @@ This feature is the front-end for a browser-based React web application called t
 - Clicking an already-visited state is intended to unmark it (toggle behavior), since the alternative (no way to undo an accidental click) would leave users unable to correct mistakes.
 - "The 50 US states" refers to the standard 50 states. Washington D.C. is in scope as an additional trackable region alongside the 50 US states; US territories remain out of scope unless the user indicates otherwise.
 
+In addition to US states, Coordinate_Commons lets a user track visited Canadian provinces and visited countries. A "My Places" control in the top navigation lets the user switch which of these three Place_Categories (US states, Canadian provinces, or countries) is currently displayed on the Map_View and tracked as visited; only one Place_Category's boundaries are shown at a time. The Requirement 1-12 behaviors above (login, session handling, map rendering, marking/unmarking, visual indication, authenticated API requests, guest access, hover info, and the visited/unvisited lists) apply identically regardless of which Place_Category is currently selected, per Requirement 13 below.
+
 **Confirmed design decisions**:
 - When an unauthenticated user logs in, any Visited_State marks made while unauthenticated are discarded and replaced by the Visited_State records retrieved from the Visit_Record_API for that account.
+- When a user switches the selected Place_Category, Coordinate_Commons keeps each previously-loaded Place_Category's Visited_Place records cached in the Shared_State_Store rather than discarding them, so that switching back to a previously-viewed Place_Category during the same session redisplays its already-known visited status immediately, without re-requesting it from the Visit_Record_API. Coordinate_Commons only requests a Place_Category's Visited_Place records from the Visit_Record_API the first time that Place_Category is selected in a given session (or on retry after a failed request).
 
 ## Glossary
 
@@ -25,6 +28,11 @@ This feature is the front-end for a browser-based React web application called t
 - **Visited_State**: A State_Boundary that the current user has marked as visited in the Shared_State_Store. For an authenticated user this is persisted via the Visit_Record_API; for an unauthenticated user it exists only in the Shared_State_Store and is not persisted.
 - **Visit_Record_API**: The existing AWS API Gateway endpoint, backed by existing AWS Lambda functions, used to create, remove, and retrieve visited-state records for the signed-in user.
 - **Shared_State_Store**: Application state created and accessed through the `make-shared-state-hook` library, shared across React components.
+- **Place_Category**: One of the three kinds of region Coordinate_Commons can display and track: US states (including Washington D.C.), Canadian provinces, or countries. Each Place_Category corresponds to exactly one `placeType` value sent to the Visit_Record_API: `us-state`, `canada-state`, or `country` respectively.
+- **My_Places_Control**: The control in the top navigation that lets a user open a dropdown and select the currently selected Place_Category.
+- **Selected_Place_Category**: The single Place_Category currently displayed on the Map_View and used for marking, unmarking, and listing Visited_Place records. Defaults to US states.
+- **Place_Boundary**: A polygon overlaid on Map_View representing the geographic boundary of one region within a Place_Category (a State_Boundary is the Place_Boundary for the US-states Place_Category; a Canadian province's or a country's boundary is a Place_Boundary for its respective Place_Category).
+- **Visited_Place**: A Place_Boundary that the current user has marked as visited in the Shared_State_Store, uniquely identified by the combination of its Place_Category and its place id. A Visited_State is the Visited_Place for the US-states Place_Category.
 
 ## Requirements
 
@@ -115,7 +123,7 @@ This feature is the front-end for a browser-based React web application called t
 
 1. THE Coordinate_Commons SHALL include the signed-in user's Cognito ID token from the Session in the Authorization header of every request it sends to the Visit_Record_API.
 2. WHILE the Shared_State_Store contains no Session, THE Coordinate_Commons SHALL NOT send any request to the Visit_Record_API.
-3. IF the Visit_Record_API rejects a request due to a missing, invalid, or expired ID token, THEN THE Coordinate_Commons SHALL clear the Session from the Shared_State_Store and display the Map_View.
+3. IF the Visit_Record_API rejects a request due to a missing, invalid, or expired ID token, THEN THE Coordinate_Commons SHALL make a best-effort attempt to clear the Session from the Shared_State_Store and display the Map_View, without treating an occasional failure to complete either action as a defect.
 
 ### Requirement 8: Technical Constraints
 
@@ -156,7 +164,8 @@ This feature is the front-end for a browser-based React web application called t
 6. WHEN the visited status of the currently hovered State_Boundary changes in the Shared_State_Store, THE State_Info_Panel SHALL update the displayed visited status to match, without requiring the user to move the mouse.
 7. THE State_Info_Panel SHALL be usable by both authenticated and unauthenticated users, per Requirement 9.
 8. IF the user's input device does not support hover (e.g., touch-only), THEN THE State_Info_Panel SHALL display the name and visited status of the most recently clicked State_Boundary instead of relying on hover.
-9. WHEN a user moves the mouse pointer over a State_Boundary, THE Map_View SHALL render that State_Boundary's border at a visibly thicker weight than an unhovered State_Boundary's border, and SHALL restore the border to its normal weight once the pointer moves off it.
+9. IF the user's input device does not support hover and the user has not yet clicked any State_Boundary, THEN THE State_Info_Panel SHALL display the neutral placeholder described in criterion 5.
+10. WHEN a user moves the mouse pointer over a State_Boundary, THE Map_View SHALL render that State_Boundary's border at a visibly thicker weight than an unhovered State_Boundary's border, and SHALL restore the border to its normal weight once the pointer moves off it.
 
 ### Requirement 11: Visited and Unvisited States List
 
@@ -182,7 +191,7 @@ This feature is the front-end for a browser-based React web application called t
 5. IF a user submits the sign-up form with a username, email address, password, or password confirmation exceeding its maximum length, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that a field is too long.
 6. IF a user submits the sign-up form with an email address that is not a well-formed email address, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that the email address is invalid.
 7. IF a user submits the sign-up form with a password and password confirmation that do not match, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that the password and confirmation do not match.
-8. WHEN a user submits a sign-up form that passes the validation in criteria 4 through 7, THE Coordinate_Commons SHALL attempt to create a new account in the AWS Cognito user pool using the submitted username, email address, and password, and, if a location was provided, the submitted location, with the attempt completing within a maximum of 10 seconds.
+8. WHEN a user submits a sign-up form that passes the validation in criteria 4 through 7, THE Coordinate_Commons SHALL initiate an attempt to create a new account in the AWS Cognito user pool using the submitted username, email address, and password, and, if a location was provided, the submitted location.
 9. WHEN the AWS Cognito user pool accepts the account-creation request, THE Sign_Up_Page SHALL display a control for entering the confirmation code sent to the submitted email address, and a control to submit it.
 10. WHEN a user submits a non-empty confirmation code, THE Coordinate_Commons SHALL attempt to confirm the new account in the AWS Cognito user pool using that code, with the attempt completing within a maximum of 10 seconds.
 11. IF a user submits an empty confirmation code, THEN THE Sign_Up_Page SHALL prevent submission and display a message indicating that a confirmation code is required.
@@ -192,3 +201,46 @@ This feature is the front-end for a browser-based React web application called t
 15. IF the AWS Cognito user pool rejects the submitted confirmation code as invalid or expired, THEN THE Sign_Up_Page SHALL display an error message indicating that the confirmation code is invalid or has expired, and SHALL remain on the Sign_Up_Page's confirmation-code step.
 16. IF an account-creation attempt or a confirmation attempt does not complete within 10 seconds or the AWS Cognito user pool cannot be reached, THEN THE Sign_Up_Page SHALL display an error message indicating that the request could not be completed, SHALL re-enable the relevant submit control, and SHALL remain on the same step of the Sign_Up_Page.
 17. WHILE an account-creation or confirmation request is in progress, THE Sign_Up_Page SHALL disable the relevant submit control and display a loading indicator.
+
+### Requirement 13: My Places Control
+
+**User Story:** As a user, I want to switch between tracking US states, Canadian provinces, and countries from the top navigation, so that I can record my travel history across more than one kind of place.
+
+#### Acceptance Criteria
+
+1. THE Coordinate_Commons SHALL display the My_Places_Control in the top navigation, positioned between the "Coordinate Commons" home control and the login/logout control.
+2. WHEN a user selects the My_Places_Control, THE Coordinate_Commons SHALL display a dropdown offering exactly three options: "US States", "Canadian Provinces", and "Countries".
+3. THE Selected_Place_Category SHALL default to US states when Coordinate_Commons first loads.
+4. THE My_Places_Control SHALL display the option corresponding to the current Selected_Place_Category as its visible label while the dropdown is closed, and SHALL indicate which of the three options corresponds to the Selected_Place_Category while the dropdown is open.
+5. WHEN a user selects an option from the My_Places_Control dropdown, THE Coordinate_Commons SHALL set the Selected_Place_Category to the Place_Category corresponding to that option and SHALL display the Map_View, regardless of which page was displayed immediately before the selection and regardless of whether the selected option matches the Selected_Place_Category already in effect.
+6. THE My_Places_Control SHALL be available to both authenticated and unauthenticated users, per Requirement 9.
+7. WHEN a user dismisses the open My_Places_Control dropdown without selecting an option, THE Coordinate_Commons SHALL close the dropdown, SHALL leave the Selected_Place_Category unchanged, and SHALL leave the currently displayed page unchanged.
+
+### Requirement 14: Switching the Selected Place Category
+
+**User Story:** As a user, I want the map to show only one kind of place at a time when I switch categories, so that the map stays readable and I can focus on one kind of travel history at a time.
+
+#### Acceptance Criteria
+
+1. WHEN the Selected_Place_Category changes, THE Map_View SHALL replace the currently rendered Place_Boundary overlays with the Place_Boundary overlays for the newly Selected_Place_Category, such that Place_Boundary overlays for at most one Place_Category are rendered at any time.
+2. WHILE the Place_Boundary data or Visited_Place records for the newly Selected_Place_Category are loading for the first time in the current session, THE Map_View SHALL display a loading indicator, per Requirements 3 and 4 applied to that Place_Category.
+3. IF the Place_Boundary data for the newly Selected_Place_Category fails to load, THEN THE Map_View SHALL display an error message and a control to retry loading, per Requirement 3.4 applied to that Place_Category, WHILE that Place_Category remains the Selected_Place_Category.
+4. IF the request for Visited_Place records for the newly Selected_Place_Category fails, THEN THE Map_View SHALL display an error message and a control to retry the request, per Requirement 4.4 applied to that Place_Category, WHILE that Place_Category remains the Selected_Place_Category.
+5. WHEN a user switches the Selected_Place_Category to a Place_Category whose Place_Boundary data and, for an authenticated user, Visited_Place records were already successfully loaded earlier in the current session, THE Coordinate_Commons SHALL redisplay that Place_Category's previously loaded Visited_Place records without sending a new request to the Visit_Record_API.
+6. WHEN a user switches the Selected_Place_Category, THE Coordinate_Commons SHALL retain the Visited_Place records of every other Place_Category in the Shared_State_Store unchanged.
+7. IF the Selected_Place_Category changes again before a Place_Boundary data or Visited_Place records request for a previously Selected_Place_Category has completed, THEN THE Coordinate_Commons SHALL discard the result of that in-progress request without rendering it or storing it in the Shared_State_Store.
+
+### Requirement 15: Place Category Scoped Tracking
+
+**User Story:** As a user, I want my visited marks, the visited/unvisited lists, and the hover info panel to reflect whichever category of place I'm currently viewing, so that marking a province or country doesn't get confused with marking a state that happens to share the same code.
+
+#### Acceptance Criteria
+
+1. THE Coordinate_Commons SHALL identify a Visited_Place uniquely by the combination of its Place_Category and the identifier of its Place_Boundary, such that marking a Place_Boundary as visited in one Place_Category SHALL NOT cause a Place_Boundary with the same identifier in a different Place_Category to be treated as visited.
+2. WHEN Coordinate_Commons sends a request to the Visit_Record_API to list, create, or remove a visited-place record, THE Coordinate_Commons SHALL send the `placeType` value corresponding to the Selected_Place_Category at the time the request is made (`us-state`, `canada-state`, or `country`).
+3. THE Map_View SHALL render the fill colors described in Requirement 6 using only the Place_Boundary entries and Visited_Place status of the Selected_Place_Category.
+4. THE State_Info_Panel SHALL display the name and visited status described in Requirement 10 using only the Place_Boundary entries and Visited_Place status of the Selected_Place_Category.
+5. THE visited/unvisited lists described in Requirement 11 SHALL display only the Place_Boundary entries and Visited_Place status of the Selected_Place_Category.
+6. WHEN a user marks or unmarks a Place_Boundary as visited per the behavior described in Requirement 5, including its authenticated and unauthenticated cases, THE Coordinate_Commons SHALL apply that mark or unmark only to the Visited_Place record of the Selected_Place_Category for that Place_Boundary, and SHALL leave the Visited_Place records of every other Place_Category unchanged.
+7. THE map-rendering and loading behavior described in Requirements 3 and 4 SHALL apply to the Place_Boundary entries and Visited_Place records of the Selected_Place_Category.
+8. THE guest-access and login-prompt behavior described in Requirement 9 SHALL apply regardless of the Selected_Place_Category.
