@@ -1,9 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import {
   useSession,
-  useVisitedStateIds,
-  useInfoPanelStateId,
-  usePendingStateIds,
+  useSelectedPlaceCategory,
+  useVisitedPlaceIdsByCategory,
+  useInfoPanelPlaceId,
+  usePendingPlaceIds,
   useToastError,
 } from './sharedState';
 
@@ -34,28 +35,52 @@ describe('sharedState hooks', () => {
     );
   });
 
-  test('useVisitedStateIds can be read and set', () => {
-    const Harness = makeHarness(useVisitedStateIds, { CA: true });
+  test('useSelectedPlaceCategory defaults to us-state and can be set', () => {
+    const Harness = makeHarness(useSelectedPlaceCategory, 'canada-state');
     render(<Harness />);
-    expect(screen.getByTestId('value').textContent).toBe(JSON.stringify({}));
+    expect(screen.getByTestId('value').textContent).toBe(JSON.stringify('us-state'));
     fireEvent.click(screen.getByText('set'));
-    expect(screen.getByTestId('value').textContent).toBe(JSON.stringify({ CA: true }));
+    expect(screen.getByTestId('value').textContent).toBe(JSON.stringify('canada-state'));
   });
 
-  test('useInfoPanelStateId can be read and set', () => {
-    const Harness = makeHarness(useInfoPanelStateId, 'CA');
+  test('useVisitedPlaceIdsByCategory can be read and set', () => {
+    const Harness = makeHarness(useVisitedPlaceIdsByCategory, {
+      'us-state': { CA: true },
+      'canada-state': {},
+      country: {},
+    });
+    render(<Harness />);
+    expect(screen.getByTestId('value').textContent).toBe(
+      JSON.stringify({ 'us-state': {}, 'canada-state': {}, country: {} })
+    );
+    fireEvent.click(screen.getByText('set'));
+    expect(screen.getByTestId('value').textContent).toBe(
+      JSON.stringify({ 'us-state': { CA: true }, 'canada-state': {}, country: {} })
+    );
+  });
+
+  test('useInfoPanelPlaceId can be read and set', () => {
+    const Harness = makeHarness(useInfoPanelPlaceId, 'CA');
     render(<Harness />);
     expect(screen.getByTestId('value').textContent).toBe(JSON.stringify(null));
     fireEvent.click(screen.getByText('set'));
     expect(screen.getByTestId('value').textContent).toBe(JSON.stringify('CA'));
   });
 
-  test('usePendingStateIds can be read and set', () => {
-    const Harness = makeHarness(usePendingStateIds, { CA: true });
+  test('usePendingPlaceIds can be read and set', () => {
+    const Harness = makeHarness(usePendingPlaceIds, {
+      'us-state': { CA: true },
+      'canada-state': {},
+      country: {},
+    });
     render(<Harness />);
-    expect(screen.getByTestId('value').textContent).toBe(JSON.stringify({}));
+    expect(screen.getByTestId('value').textContent).toBe(
+      JSON.stringify({ 'us-state': {}, 'canada-state': {}, country: {} })
+    );
     fireEvent.click(screen.getByText('set'));
-    expect(screen.getByTestId('value').textContent).toBe(JSON.stringify({ CA: true }));
+    expect(screen.getByTestId('value').textContent).toBe(
+      JSON.stringify({ 'us-state': { CA: true }, 'canada-state': {}, country: {} })
+    );
   });
 
   test('useToastError can be read and set', () => {

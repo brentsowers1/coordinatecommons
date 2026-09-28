@@ -1,7 +1,7 @@
 // Unit tests for useStateBoundaryClickHandler (task 14.6): the wiring
-// between the pure `handleStateBoundaryClick` orchestration function and
-// the Shared_State_Store (useSession/useVisitedStateIds/usePendingStateIds/
-// useToastError). Properties 10-13 already cover handleStateBoundaryClick
+// between the pure `handlePlaceBoundaryClick` orchestration function and
+// the Shared_State_Store (useSession/useVisitedPlaceIdsByCategory/
+// usePendingPlaceIds/useToastError). Properties 10-13 already cover handlePlaceBoundaryClick
 // itself (tasks 14.2-14.5); these tests only cover that the wiring applies
 // the optimistic update, then the settled result, and surfaces a toast
 // error on revert (Requirements 5.3, 9.4).
@@ -10,13 +10,21 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
 import { useStateBoundaryClickHandler } from './useStateBoundaryClickHandler';
-import { useSession, useVisitedStateIds, usePendingStateIds, useToastError } from './sharedState';
+import {
+  useSession,
+  useSelectedPlaceCategory,
+  useVisitedPlaceIdsByCategory,
+  usePendingPlaceIds,
+  useToastError,
+} from './sharedState';
 
-function Harness({ apiClient }) {
+function Harness({ apiClient, category = 'us-state' }) {
   const onStateBoundaryClick = useStateBoundaryClickHandler(apiClient);
   const [, setSession] = useSession();
-  const [visitedStateIds] = useVisitedStateIds();
-  const [pendingStateIds] = usePendingStateIds();
+  const [visitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+  const [pendingPlaceIds] = usePendingPlaceIds();
+  const visitedStateIds = visitedPlaceIdsByCategory[category];
+  const pendingStateIds = pendingPlaceIds[category];
   const [toastError] = useToastError();
 
   return (
@@ -36,13 +44,15 @@ function Harness({ apiClient }) {
 function resetSharedState() {
   function Reset() {
     const [, setSession] = useSession();
-    const [, setVisitedStateIds] = useVisitedStateIds();
-    const [, setPendingStateIds] = usePendingStateIds();
+    const [, setSelectedPlaceCategory] = useSelectedPlaceCategory();
+    const [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+    const [, setPendingPlaceIds] = usePendingPlaceIds();
     const [, setToastError] = useToastError();
     React.useEffect(() => {
       setSession(null);
-      setVisitedStateIds({});
-      setPendingStateIds({});
+      setSelectedPlaceCategory('us-state');
+      setVisitedPlaceIdsByCategory({ 'us-state': {}, 'canada-state': {}, country: {} });
+      setPendingPlaceIds({ 'us-state': {}, 'canada-state': {}, country: {} });
       setToastError(null);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -76,6 +86,7 @@ describe('useStateBoundaryClickHandler', () => {
     expect(screen.getByTestId('toastError').textContent).toBe(JSON.stringify(null));
     expect(apiClient.saveVisitedState).toHaveBeenCalledWith(
       expect.objectContaining({ accessToken: 'tok' }),
+      'us-state',
       'CA',
       true
     );
@@ -142,6 +153,62 @@ describe('useStateBoundaryClickHandler', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('pending').textContent).toBe(JSON.stringify({}))
+    );
+  });
+
+  // Bugfix regression test (Requirement 15.2): this hook must read the
+  // *current* Selected_Place_Category itself -- not a hardcoded
+  // 'us-state' -- so saves under any other category send the correct
+  // placeCategory/placeType, and update that category's own slice of the
+  // per-category stores rather than 'us-state''s.
+  it('uses the current (non-us-state) Selected_Place_Category for the save call and for the store slice it reads/writes', async () => {
+    const apiClient = { saveVisitedState: jest.fn().mockResolvedValue(undefined) };
+
+    function CategorySetter() {
+      const [, setSelectedPlaceCategory] = useSelectedPlaceCategory();
+      React.useEffect(() => {
+        setSelectedPlaceCategory('canada-state');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+      return null;
+    }
+    render(<CategorySetter />);
+
+    render(<Harness apiClient={apiClient} category="canada-state" />);
+
+    fireEvent.click(screen.getByText('sign in'));
+    fireEvent.click(screen.getByText('click CA'));
+
+    // Optimistic update applied to the 'canada-state' slice.
+    expect(screen.getByTestId('visited').textContent).toBe(JSON.stringify({ CA: true }));
+    expect(screen.getByTestId('pending').textContent).toBe(JSON.stringify({ CA: true }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('pending').textContent).toBe(JSON.stringify({}))
+    );
+
+    expect(screen.getByTestId('visited').textContent).toBe(JSON.stringify({ CA: true }));
+    expect(apiClient.saveVisitedState).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: 'tok' }),
+      'canada-state',
+      'CA',
+      true
+    );
+
+    // The 'us-state' slice must remain untouched by a 'canada-state' save.
+    function UsStateReader() {
+      const [visitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+      const [pendingPlaceIds] = usePendingPlaceIds();
+      return (
+        <span data-testid="us-state-visited">
+          {JSON.stringify(visitedPlaceIdsByCategory['us-state'])}
+          {JSON.stringify(pendingPlaceIds['us-state'])}
+        </span>
+      );
+    }
+    render(<UsStateReader />);
+    expect(screen.getByTestId('us-state-visited').textContent).toBe(
+      JSON.stringify({}) + JSON.stringify({})
     );
   });
 });

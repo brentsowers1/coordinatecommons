@@ -23,11 +23,16 @@ import { render, act } from '@testing-library/react';
 
 import { StateBoundaryOverlay } from './StateBoundaryOverlay';
 import { useStateBoundaryClickHandler } from '../state/useStateBoundaryClickHandler';
-import { useSession, useVisitedStateIds, usePendingStateIds, useToastError } from '../state/sharedState';
+import {
+  useSession,
+  useVisitedPlaceIdsByCategory,
+  usePendingPlaceIds,
+  useToastError,
+} from '../state/sharedState';
 
 const REGIONS = [
   {
-    stateId: 'CA',
+    placeId: 'CA',
     name: 'California',
     polygons: [
       [
@@ -39,7 +44,7 @@ const REGIONS = [
     ],
   },
   {
-    stateId: 'NV',
+    placeId: 'NV',
     name: 'Nevada',
     polygons: [
       [
@@ -93,13 +98,13 @@ afterEach(() => {
 function resetSharedState() {
   function Reset() {
     const [, setSession] = useSession();
-    const [, setVisitedStateIds] = useVisitedStateIds();
-    const [, setPendingStateIds] = usePendingStateIds();
+    const [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+    const [, setPendingPlaceIds] = usePendingPlaceIds();
     const [, setToastError] = useToastError();
     React.useEffect(() => {
       setSession(null);
-      setVisitedStateIds({});
-      setPendingStateIds({});
+      setVisitedPlaceIdsByCategory({ 'us-state': {}, 'canada-state': {}, country: {} });
+      setPendingPlaceIds({ 'us-state': {}, 'canada-state': {}, country: {} });
       setToastError(null);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -113,11 +118,16 @@ beforeEach(() => {
   resetSharedState();
 });
 
-// Sibling probe component reading the shared visited-state map, following
-// the SessionProbe pattern used in LoginPage.test.js.
+// Sibling probe component reading the shared visited-state map (the
+// 'us-state' slice, per task 21.1), following the SessionProbe pattern
+// used in LoginPage.test.js.
 function VisitedStateIdsProbe() {
-  const [visitedStateIds] = useVisitedStateIds();
-  return <div data-testid="visited-state-ids-probe">{JSON.stringify(visitedStateIds)}</div>;
+  const [visitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+  return (
+    <div data-testid="visited-state-ids-probe">
+      {JSON.stringify(visitedPlaceIdsByCategory['us-state'])}
+    </div>
+  );
 }
 
 // Wires a REAL onStateBoundaryClick (built from the real
@@ -159,8 +169,8 @@ describe('Guest local marks persistence across a re-render (integration)', () =>
 
     expect(getByTestId('visited-state-ids-probe').textContent).toBe(JSON.stringify({ CA: true }));
 
-    // Re-render the component tree. Because useVisitedStateIds is shared
-    // state (make-shared-state-hook's module-level state), not local
+    // Re-render the component tree. Because useVisitedPlaceIdsByCategory is
+    // shared state (make-shared-state-hook's module-level state), not local
     // component state, the mark must survive this re-render.
     rerender(<GuestMapHarness map={map} apiClient={apiClient} />);
 

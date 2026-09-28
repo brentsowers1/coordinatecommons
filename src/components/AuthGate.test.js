@@ -49,10 +49,17 @@ jest.mock('./SignUpPage', () => ({
   ),
 }));
 jest.mock('./TopNav', () => ({
-  TopNav: ({ onRequestLogin }) => (
+  TopNav: ({ onRequestLogin, onNavigateToMapPage }) => (
     <div data-testid="mock-top-nav">
       <button type="button" onClick={onRequestLogin} data-testid="mock-login-control">
         Log in
+      </button>
+      <button
+        type="button"
+        onClick={onNavigateToMapPage}
+        data-testid="mock-my-places-control"
+      >
+        My Places
       </button>
     </div>
   ),
@@ -135,6 +142,18 @@ describe('AuthGate', () => {
     act(() => {
       fireEvent.click(screen.getByTestId('set-session'));
     });
+
+    expect(screen.getByTestId('mock-map-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('mock-login-page')).not.toBeInTheDocument();
+  });
+
+  it('passes onNavigateToMapPage through to TopNav, navigating back to MapPage regardless of which page was showing (Requirement 13.5)', () => {
+    render(<AuthGate />);
+
+    fireEvent.click(screen.getByTestId('mock-login-control'));
+    expect(screen.getByTestId('mock-login-page')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('mock-my-places-control'));
 
     expect(screen.getByTestId('mock-map-page')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-login-page')).not.toBeInTheDocument();

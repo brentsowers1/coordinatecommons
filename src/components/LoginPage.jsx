@@ -14,7 +14,9 @@
 // router/parent to literally "navigate" to -- so `LoginPage` does not call
 // any navigation function. Instead, on a successful login it applies the
 // two side effects Requirement 1.6 actually requires: setting `useSession`
-// to the new Session and resetting `useVisitedStateIds` to `{}`. Once
+// to the new Session and resetting every category's slice of
+// `useVisitedPlaceIdsByCategory` to `{}` (design.md: the discard-on-login
+// behavior is not itself category-scoped). Once
 // `AuthGate` exists, it will read `useSession`, see it go from `null` to
 // non-null, and render `MapPage` instead of `LoginPage` -- which is what
 // "navigates back to Map_View on success" means in practice for this
@@ -60,7 +62,7 @@ import React from 'react';
 import { LoginForm } from './LoginForm';
 import { login } from '../services/authenticationService';
 import { handleLoginSuccess } from '../services/sessionHandlers';
-import { useSession, useVisitedStateIds } from '../state/sharedState';
+import { useSession, useVisitedPlaceIdsByCategory } from '../state/sharedState';
 
 const INVALID_CREDENTIALS_MESSAGE = 'The username or password is invalid.';
 const TIMEOUT_MESSAGE = 'The login attempt could not be completed. Please try again.';
@@ -77,7 +79,7 @@ const TIMEOUT_MESSAGE = 'The login attempt could not be completed. Please try ag
  */
 export function LoginPage({ onRequestSignUp, successMessage = null } = {}) {
   const [, setSession] = useSession();
-  const [, setVisitedStateIds] = useVisitedStateIds();
+  const [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
   const [errorMessage, setErrorMessage] = React.useState(null);
 
   async function handleSubmit(username, password) {
@@ -86,12 +88,17 @@ export function LoginPage({ onRequestSignUp, successMessage = null } = {}) {
 
     try {
       const loginResult = await login(username, password);
-      const { session, visitedStateIds } = handleLoginSuccess(loginResult);
-      // Requirement 1.6: store the Session and discard prior visited-state
-      // data. See the module-level comment above for why no explicit
-      // navigation call happens here.
+      const { session, visitedPlaceIdsByCategory } = handleLoginSuccess(loginResult);
+      // Requirement 1.6: store the Session and discard prior visited-place
+      // data for every Place_Category (task 31.1) -- the discard-on-login
+      // behavior is not itself category-scoped (design.md). See the
+      // module-level comment above for why no explicit navigation call
+      // happens here. handleLoginSuccess returns the full replacement
+      // object for useVisitedPlaceIdsByCategory (all three categories
+      // reset to `{}`), so it fully replaces the store rather than merging
+      // into a single slice.
       setSession(session);
-      setVisitedStateIds(visitedStateIds);
+      setVisitedPlaceIdsByCategory(visitedPlaceIdsByCategory);
     } catch (error) {
       const kind = error && error.kind;
       if (kind === 'INVALID_CREDENTIALS') {

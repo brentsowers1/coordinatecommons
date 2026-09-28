@@ -6,7 +6,7 @@
 // pending/disabled/loading UI while a submission is in flight. It does not
 // call `AuthenticationService.login` itself, does not know about
 // `INVALID_CREDENTIALS`/`TIMEOUT_OR_UNREACHABLE`, and does not touch
-// `useSession`/`useVisitedStateIds` or navigation -- all of that is
+// `useSession`/`useVisitedPlaceIdsByCategory` or navigation -- all of that is
 // `LoginPage`'s responsibility (task 18.2), per design.md's split between
 // "LoginPage" and "LoginForm".
 //

@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "stateId": "ON", "name": "Ontario" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-90, 45], [-89, 45], [-89, 46], [-90, 46], [-90, 45]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "QC", "name": "Quebec" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-72, 47], [-71, 47], [-71, 48], [-72, 48], [-72, 47]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "BC", "name": "British Columbia" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-124, 53], [-123, 53], [-123, 54], [-124, 54], [-124, 53]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "AB", "name": "Alberta" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-114, 52], [-113, 52], [-113, 53], [-114, 53], [-114, 52]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "NS", "name": "Nova Scotia" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-63, 45], [-62, 45], [-62, 46], [-63, 46], [-63, 45]]] }
+    }
+  ]
+}

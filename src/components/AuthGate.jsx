@@ -96,10 +96,15 @@
 // currently renders, so the nav is visible on every page. TopNav is wired
 // to the same `currentPage` state AuthGate owns --
 // `onNavigateHome={() => setCurrentPage('map')}` (the "Coordinate Commons"
-// home control) and `onRequestLogin={() => setCurrentPage('login')}` (the
-// "Log in" control, replacing MapPage's former inline login control).
-// Logout itself needs no callback from AuthGate -- TopNav handles it
-// internally via `handleLogout()`.
+// home control), `onNavigateToMapPage={() => setCurrentPage('map')}` (task
+// 24.4: forwarded straight through to `MyPlacesControl`'s identically-
+// named prop, called after any My_Places_Control selection per
+// Requirement 13.5 -- deliberately the same underlying callback as
+// `onNavigateHome`, since both just mean "show MapPage"), and
+// `onRequestLogin={() => setCurrentPage('login')}` (the "Log in" control,
+// replacing MapPage's former inline login control). Logout itself needs
+// no callback from AuthGate -- TopNav handles it internally via
+// `handleLogout()`.
 //
 // Pico.css layout landmarks: AuthGate is effectively the whole page body
 // (App renders nothing else), so its output is wrapped to match Pico's
@@ -182,6 +187,7 @@ export function AuthGate() {
       <header className="container">
         <TopNav
           onNavigateHome={() => setCurrentPage('map')}
+          onNavigateToMapPage={() => setCurrentPage('map')}
           onRequestLogin={() => setCurrentPage('login')}
         />
       </header>

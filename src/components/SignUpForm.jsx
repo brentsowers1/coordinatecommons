@@ -5,7 +5,7 @@
 // themselves, client-side validation via `validateSignUpFields`, and the
 // pending/disabled/loading UI while a submission is in flight. It does not
 // call `authenticationService.signUp` itself and does not touch
-// `useSession`/`useVisitedStateIds` or navigation -- all of that is
+// `useSession`/`useVisitedPlaceIdsByCategory` or navigation -- all of that is
 // `SignUpPage`'s responsibility, per design.md's split between
 // "SignUpPage" and "SignUpForm".
 //

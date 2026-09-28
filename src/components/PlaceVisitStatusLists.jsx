@@ -1,21 +1,36 @@
-// Visited_States_Lists component (design.md: "VisitedStatesLists";
+// Place_Visit_Status_Lists component (design.md: "VisitedStatesLists";
 // Requirement 11).
+//
+// Scope note (task 21.8), mirroring PlaceInfoPanel.jsx's distinction
+// between Requirements vocabulary and design.md's generalized vocabulary:
+// Requirement 11's own text still calls this the Visited_States_Lists,
+// written for the US-states case specifically, but design.md generalizes
+// it to Place_Visit_Status_Lists so the same component can serve any
+// Place_Category, not just 'us-state'.
 //
 // Renders two side-by-side columns below the map: a Visited_State list on
 // the left, and a list of State_Boundary entries that are not Visited_State
 // on the right (Requirement 11.1). Both lists are derived from the pure
-// `partitionRegionsByVisited(regions, visitedStateIds)` (Property 22),
-// which guarantees every region in `regions` appears in exactly one of the
-// two lists.
+// `partitionPlaceBoundariesByVisited(placeBoundaries, visitedPlaceIds)`
+// (Property 22), which guarantees every entry in `placeBoundaries` appears
+// in exactly one of the two lists.
 //
-// Like `StateInfoPanel`, this component reads `useVisitedStateIds` itself
-// rather than being handed it as a prop, and does not read `useSession` at
-// all -- it is available regardless of authentication state, since guests
-// can mark states locally too (Requirement 9, Requirement 11.4). Because
-// it is a plain re-render on a shared-state change, "updates as you click"
-// (Requirement 11.3) comes for free: no new event wiring is needed here,
-// and list items intentionally have no click handling of their own --
-// toggling a visited state still only happens via the map.
+// Like `PlaceInfoPanel`, this component reads `useVisitedPlaceIdsByCategory`
+// itself rather than being handed it as a prop, and does not read
+// `useSession` at all -- it is available regardless of authentication
+// state, since guests can mark states locally too (Requirement 9,
+// Requirement 11.4). Because it is a plain re-render on a shared-state
+// change, "updates as you click" (Requirement 11.3) comes for free: no new
+// event wiring is needed here, and list items intentionally have no click
+// handling of their own -- toggling a visited state still only happens via
+// the map.
+//
+// Task 21.8: rather than hardcoding the 'us-state' slice, this component
+// now reads `useSelectedPlaceCategory` and uses its current value to index
+// into `useVisitedPlaceIdsByCategory()`'s per-category map. Since
+// `useSelectedPlaceCategory` still defaults to 'us-state' and nothing yet
+// lets a user change it (that's task 24), existing single-category
+// behavior is unchanged for now.
 //
 // Pico.css layout: the outer wrapper has exactly two direct `<div>`
 // children (one per column), which is exactly the shape Pico's documented
@@ -27,8 +42,8 @@
 // `className="grid"`.
 
 import React from 'react';
-import { useVisitedStateIds } from '../state/sharedState';
-import { partitionRegionsByVisited } from './partitionRegionsByVisited';
+import { useSelectedPlaceCategory, useVisitedPlaceIdsByCategory } from '../state/sharedState';
+import { partitionPlaceBoundariesByVisited } from './partitionPlaceBoundariesByVisited';
 
 /**
  * Renders one column: a heading, and either a `<ul>` of region names or an
@@ -36,7 +51,7 @@ import { partitionRegionsByVisited } from './partitionRegionsByVisited';
  *
  * @param {Object} props
  * @param {string} props.heading
- * @param {import('../data/stateBoundaries').Region[]} props.regionsList
+ * @param {import('../data/placeBoundaries').PlaceBoundary[]} props.regionsList
  * @param {string} props.listTestId
  * @param {(stateId: string) => string} props.itemTestId
  */
@@ -64,7 +79,7 @@ function VisitedStatesColumn({ heading, regionsList, listTestId, itemTestId }) {
         // untouched.
         <ul data-testid={listTestId} style={{ '--pico-typography-spacing-vertical': '0.25rem' }}>
           {regionsList.map((region) => (
-            <li key={region.stateId} data-testid={itemTestId(region.stateId)}>
+            <li key={region.placeId} data-testid={itemTestId(region.placeId)}>
               {region.name}
             </li>
           ))}
@@ -75,24 +90,27 @@ function VisitedStatesColumn({ heading, regionsList, listTestId, itemTestId }) {
 }
 
 /**
- * The Visited_States_Lists (Requirement 11).
+ * The Place_Visit_Status_Lists (Requirement 11; called Visited_States_Lists
+ * in that requirement's US-states-specific text).
  *
  * Rendered by `MapView` as a sibling of `GoogleMapCanvas`/
- * `StateBoundaryOverlay`/`StateInfoPanel`, below the map. `MapView` passes
+ * `StateBoundaryOverlay`/`PlaceInfoPanel`, below the map. `MapView` passes
  * down the `regions` array it already holds from its own
- * `useRegionsLoader()` call, so this component never fetches the boundary
+ * `usePlaceBoundariesLoader()` call, so this component never fetches the boundary
  * GeoJSON itself.
  *
  * @param {Object} props
- * @param {import('../data/stateBoundaries').Region[]} [props.regions] - the
+ * @param {import('../data/placeBoundaries').PlaceBoundary[]} [props.regions] - the
  *   currently loaded region list (defaults to `[]`).
  */
-export function VisitedStatesLists({ regions = [] }) {
-  const [visitedStateIds] = useVisitedStateIds();
+export function PlaceVisitStatusLists({ regions = [] }) {
+  const [selectedPlaceCategory] = useSelectedPlaceCategory();
+  const [visitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+  const visitedPlaceIds = visitedPlaceIdsByCategory[selectedPlaceCategory];
 
   const { visited, notVisited } = React.useMemo(
-    () => partitionRegionsByVisited(regions, visitedStateIds),
-    [regions, visitedStateIds]
+    () => partitionPlaceBoundariesByVisited(regions, visitedPlaceIds),
+    [regions, visitedPlaceIds]
   );
 
   return (

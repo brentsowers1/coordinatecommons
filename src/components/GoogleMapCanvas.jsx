@@ -3,7 +3,7 @@
 //
 // Scope note (task 12.2): this component owns ONLY the DOM element the map
 // is mounted into and the `google.maps.Map` construction itself. It does
-// not know about `useGoogleMapsLoader()`/`useRegionsLoader()` -- `MapView`
+// not know about `useGoogleMapsLoader()`/`usePlaceBoundariesLoader()` -- `MapView`
 // is responsible for only rendering `GoogleMapCanvas` once both report
 // `ready` (Requirements 3.3, 3.4), so by the time this component mounts,
 // `window.google.maps` is expected to already be available. The

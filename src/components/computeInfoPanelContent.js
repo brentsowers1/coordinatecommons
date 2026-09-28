@@ -1,70 +1,70 @@
-// Pure content derivation for the State_Info_Panel (design.md: "StateInfoPanel",
+// Pure content derivation for the Place_Info_Panel (design.md: "PlaceInfoPanel",
 // Properties 18, 19, 20).
 //
 // This function knows nothing about hover vs. click, device capability, or
-// how `infoPanelStateId` was set — it is purely a function of the current
-// target and the two shared-state maps (`regionsById`, `visitedStateIds`).
-// Device-capability branching (Requirement 10.8) lives entirely in the
-// `StateInfoPanel` component (task 15.5), keeping `computeInfoPanelContent`
-// agnostic per design.md's note on Property 21.
+// how `infoPanelPlaceId` was set — it is purely a function of the current
+// target and the two shared-state maps (`placeBoundariesById`,
+// `visitedPlaceIds`). Device-capability branching (Requirement 10.8) lives
+// entirely in the `PlaceInfoPanel` component (task 15.5), keeping
+// `computeInfoPanelContent` agnostic per design.md's note on Property 21.
 
 /**
- * @typedef {import('../data/stateBoundaries').Region} Region
+ * @typedef {import('../data/placeBoundaries').PlaceBoundary} Region
  *
- * @typedef {{ stateId: null }} InfoPanelPlaceholderContent
- * @typedef {{ stateId: string, name: string, visited: boolean }} InfoPanelTargetedContent
+ * @typedef {{ placeId: null }} InfoPanelPlaceholderContent
+ * @typedef {{ placeId: string, name: string, visited: boolean }} InfoPanelTargetedContent
  */
 
 /**
- * Determines what the State_Info_Panel should display right now.
+ * Determines what the Place_Info_Panel should display right now.
  *
- * - When `infoPanelStateId` is `null`, always returns the neutral
- *   placeholder `{ stateId: null }` (Requirements 10.3, 10.5; Property 19).
- * - When `infoPanelStateId` identifies a known region in `regionsById`,
- *   returns that region's `name` and a `visited` flag equal to its
- *   membership in `visitedStateIds` (Requirements 10.2, 10.4; Property 18).
- *   Because this is a pure function re-evaluated on every render, a
- *   `visitedStateIds` change alone changes the returned `visited` flag for
- *   the same `infoPanelStateId`, with `stateId`/`name` unchanged
- *   (Requirement 10.6; Property 20).
- * - Defensively, when `infoPanelStateId` is non-null but not found in
- *   `regionsById` (shouldn't normally happen — `infoPanelStateId` is only
- *   ever set to a `stateId` resolved from the loaded regions — but could
- *   arise from a stale id if `regionsById` is ever repopulated), falls back
- *   to the placeholder `{ stateId: null }` rather than displaying a
- *   name-less/incomplete panel.
+ * - When `infoPanelPlaceId` is `null`, always returns the neutral
+ *   placeholder `{ placeId: null }` (Requirements 10.3, 10.5; Property 19).
+ * - When `infoPanelPlaceId` identifies a known region in
+ *   `placeBoundariesById`, returns that region's `name` and a `visited`
+ *   flag equal to its membership in `visitedPlaceIds` (Requirements 10.2,
+ *   10.4; Property 18). Because this is a pure function re-evaluated on
+ *   every render, a `visitedPlaceIds` change alone changes the returned
+ *   `visited` flag for the same `infoPanelPlaceId`, with `placeId`/`name`
+ *   unchanged (Requirement 10.6; Property 20).
+ * - Defensively, when `infoPanelPlaceId` is non-null but not found in
+ *   `placeBoundariesById` (shouldn't normally happen — `infoPanelPlaceId`
+ *   is only ever set to a `placeId` resolved from the loaded regions — but
+ *   could arise from a stale id if `placeBoundariesById` is ever
+ *   repopulated), falls back to the placeholder `{ placeId: null }` rather
+ *   than displaying a name-less/incomplete panel.
  *
- * @param {string | null} infoPanelStateId - the currently targeted region's
- *   `stateId`, or `null` if nothing is targeted.
- * @param {Object.<string, Region>} regionsById - lookup of `stateId` to
- *   `Region`, keyed the same way as the loaded region list.
- * @param {Object.<string, boolean>} visitedStateIds - current visited-state
+ * @param {string | null} infoPanelPlaceId - the currently targeted region's
+ *   `placeId`, or `null` if nothing is targeted.
+ * @param {Object.<string, Region>} placeBoundariesById - lookup of
+ *   `placeId` to `Region`, keyed the same way as the loaded region list.
+ * @param {Object.<string, boolean>} visitedPlaceIds - current visited-place
  *   membership map.
  * @returns {InfoPanelPlaceholderContent | InfoPanelTargetedContent}
  */
-export function computeInfoPanelContent(infoPanelStateId, regionsById, visitedStateIds) {
-  if (infoPanelStateId == null) {
-    return { stateId: null };
+export function computeInfoPanelContent(infoPanelPlaceId, placeBoundariesById, visitedPlaceIds) {
+  if (infoPanelPlaceId == null) {
+    return { placeId: null };
   }
 
   const region =
-    regionsById != null
-      ? Object.prototype.hasOwnProperty.call(regionsById, infoPanelStateId)
-        ? regionsById[infoPanelStateId]
+    placeBoundariesById != null
+      ? Object.prototype.hasOwnProperty.call(placeBoundariesById, infoPanelPlaceId)
+        ? placeBoundariesById[infoPanelPlaceId]
         : undefined
       : undefined;
 
   if (region == null) {
     // Defensive fallback: an unresolvable target is treated as no target.
-    return { stateId: null };
+    return { placeId: null };
   }
 
   const visited =
-    visitedStateIds != null &&
-    Object.prototype.hasOwnProperty.call(visitedStateIds, infoPanelStateId);
+    visitedPlaceIds != null &&
+    Object.prototype.hasOwnProperty.call(visitedPlaceIds, infoPanelPlaceId);
 
   return {
-    stateId: infoPanelStateId,
+    placeId: infoPanelPlaceId,
     name: region.name,
     visited,
   };

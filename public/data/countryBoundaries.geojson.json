@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "stateId": "CA", "name": "Canada" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-100, 55], [-99, 55], [-99, 56], [-100, 56], [-100, 55]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "MX", "name": "Mexico" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-102, 23], [-101, 23], [-101, 24], [-102, 24], [-102, 23]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "FR", "name": "France" },
+      "geometry": { "type": "Polygon", "coordinates": [[[2, 46], [3, 46], [3, 47], [2, 47], [2, 46]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "JP", "name": "Japan" },
+      "geometry": { "type": "Polygon", "coordinates": [[[138, 36], [139, 36], [139, 37], [138, 37], [138, 36]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "stateId": "BR", "name": "Brazil" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-52, -12], [-51, -12], [-51, -11], [-52, -11], [-52, -12]]] }
+    }
+  ]
+}

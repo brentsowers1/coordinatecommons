@@ -7,15 +7,15 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 import { TopNav } from './TopNav';
-import { useSession, useVisitedStateIds, useSignOutReason } from '../state/sharedState';
+import { useSession, useVisitedPlaceIdsByCategory, useSignOutReason } from '../state/sharedState';
 
 function Setter({ session, visitedStateIds, signOutReason }) {
   const [, setSession] = useSession();
-  const [, setVisitedStateIds] = useVisitedStateIds();
+  const [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
   const [, setSignOutReason] = useSignOutReason();
   React.useEffect(() => {
     setSession(session);
-    setVisitedStateIds(visitedStateIds);
+    setVisitedPlaceIdsByCategory({ 'us-state': visitedStateIds, 'canada-state': {}, country: {} });
     setSignOutReason(signOutReason);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -27,8 +27,12 @@ function setUpSharedState({ session = null, visitedStateIds = {}, signOutReason 
 }
 
 function VisitedStateIdsProbe() {
-  const [visitedStateIds] = useVisitedStateIds();
-  return <div data-testid="visited-state-ids-probe">{JSON.stringify(visitedStateIds)}</div>;
+  const [visitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+  return (
+    <div data-testid="visited-state-ids-probe">
+      {JSON.stringify(visitedPlaceIdsByCategory['us-state'])}
+    </div>
+  );
 }
 
 function SignOutReasonProbe() {
@@ -122,5 +126,111 @@ describe('TopNav', () => {
     fireEvent.click(screen.getByTestId('nav-logout-link'));
 
     expect(screen.getByTestId('sign-out-reason-probe').textContent).toBe(JSON.stringify('LOGOUT'));
+  });
+
+  // Task 24.4 / Requirement 13.1: MyPlacesControl is rendered inside
+  // TopNav, positioned between the home control and the login/logout
+  // control.
+  it('renders MyPlacesControl positioned between the home control and the login/logout control (Requirement 13.1)', () => {
+    setUpSharedState({ session: null });
+    render(<TopNav onNavigateHome={jest.fn()} onRequestLogin={jest.fn()} />);
+
+    const homeControl = screen.getByTestId('nav-home-link');
+    const myPlacesControl = screen.getByTestId('my-places-control');
+    const loginControl = screen.getByTestId('nav-login-link');
+
+    expect(myPlacesControl).toBeInTheDocument();
+
+    // DOCUMENT_POSITION_FOLLOWING (4) means the reference node comes
+    // after the node passed to compareDocumentPosition -- i.e. `home`
+    // precedes `myPlaces`, and `myPlaces` precedes `login`, establishing
+    // the exact 3-way left-to-right ordering Requirement 13.1 requires.
+    // eslint-disable-next-line no-bitwise
+    expect(homeControl.compareDocumentPosition(myPlacesControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // eslint-disable-next-line no-bitwise
+    expect(myPlacesControl.compareDocumentPosition(loginControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // Also verify via the shared `<nav>` parent's top-level `<ul>` group
+    // structure: the home control is alone in the leading group, while
+    // MyPlacesControl and the login control are grouped together in the
+    // SAME trailing group -- this is what visually groups them on the
+    // right side of the nav (see TopNav.jsx's Pico.css markup note).
+    const nav = screen.getByTestId('top-nav');
+    const groups = Array.from(nav.children);
+    const homeGroupIndex = groups.findIndex((group) => group.contains(homeControl));
+    const myPlacesGroupIndex = groups.findIndex((group) => group.contains(myPlacesControl));
+    const loginGroupIndex = groups.findIndex((group) => group.contains(loginControl));
+
+    expect(homeGroupIndex).toBeLessThan(myPlacesGroupIndex);
+    expect(myPlacesGroupIndex).toBe(loginGroupIndex);
+  });
+
+  it('passes onNavigateToMapPage through to MyPlacesControl', () => {
+    setUpSharedState({ session: null });
+    const onNavigateToMapPage = jest.fn();
+    render(
+      <TopNav
+        onNavigateHome={jest.fn()}
+        onRequestLogin={jest.fn()}
+        onNavigateToMapPage={onNavigateToMapPage}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('my-places-control'));
+    fireEvent.click(screen.getByTestId('my-places-option-canada-state'));
+
+    expect(onNavigateToMapPage).toHaveBeenCalledTimes(1);
+  });
+
+  // Task 24.5 / Requirement 13.1: the existing ordering test above only
+  // covers the signed-out (login-link) case. Requirement 13.1's "positioned
+  // between" guarantee doesn't specify a session state, so it must also
+  // hold when a session exists and the logout link renders in place of the
+  // login link.
+  it('renders MyPlacesControl positioned between the home control and the logout control when a session exists (Requirement 13.1)', () => {
+    setUpSharedState({ session: { username: 'alice', accessToken: 'token', expiresAt: Date.now() + 100000 } });
+    render(<TopNav onNavigateHome={jest.fn()} onRequestLogin={jest.fn()} />);
+
+    const homeControl = screen.getByTestId('nav-home-link');
+    const myPlacesControl = screen.getByTestId('my-places-control');
+    const logoutControl = screen.getByTestId('nav-logout-link');
+
+    expect(myPlacesControl).toBeInTheDocument();
+
+    // eslint-disable-next-line no-bitwise
+    expect(homeControl.compareDocumentPosition(myPlacesControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // eslint-disable-next-line no-bitwise
+    expect(myPlacesControl.compareDocumentPosition(logoutControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    const nav = screen.getByTestId('top-nav');
+    const groups = Array.from(nav.children);
+    const homeGroupIndex = groups.findIndex((group) => group.contains(homeControl));
+    const myPlacesGroupIndex = groups.findIndex((group) => group.contains(myPlacesControl));
+    const logoutGroupIndex = groups.findIndex((group) => group.contains(logoutControl));
+
+    expect(homeGroupIndex).toBeLessThan(myPlacesGroupIndex);
+    expect(myPlacesGroupIndex).toBe(logoutGroupIndex);
+  });
+
+  // Task 24.5 regression guard: interacting with MyPlacesControl (opening
+  // its dropdown, selecting an option) must not accidentally trigger
+  // TopNav's own onNavigateHome/onRequestLogin callbacks, and vice versa --
+  // the three controls' handlers must stay fully independent.
+  it('does not cross-trigger onNavigateHome or onRequestLogin when opening or using MyPlacesControl', () => {
+    setUpSharedState({ session: null });
+    const onNavigateHome = jest.fn();
+    const onRequestLogin = jest.fn();
+    render(<TopNav onNavigateHome={onNavigateHome} onRequestLogin={onRequestLogin} />);
+
+    fireEvent.click(screen.getByTestId('my-places-control'));
+    fireEvent.click(screen.getByTestId('my-places-option-country'));
+
+    expect(onNavigateHome).not.toHaveBeenCalled();
+    expect(onRequestLogin).not.toHaveBeenCalled();
+
+    // And conversely, clicking home/login must not open or affect
+    // MyPlacesControl's dropdown.
+    fireEvent.click(screen.getByTestId('nav-home-link'));
+    expect(screen.queryByTestId('my-places-dropdown')).not.toBeInTheDocument();
   });
 });

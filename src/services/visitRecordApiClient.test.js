@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { listVisitedStates, saveVisitedState } from './visitRecordApiClient';
+import { listVisitedPlaces, saveVisitedPlace } from './visitRecordApiClient';
 
 // Arbitrary for a non-null Session, varying only the accessToken (the field
 // that matters for the Authorization header); other fields are along for
@@ -11,38 +11,42 @@ const sessionArbitrary = fc
     expiresAt: fc.integer(),
   });
 
+// The three Place_Category values supported by the Visit_Record_API
+// (Requirement 15.2; design.md's "Visit_Record_API Contract").
+const placeCategoryArbitrary = fc.constantFrom('us-state', 'canada-state', 'country');
+
 describe('visitRecordApiClient', () => {
-  it('exports listVisitedStates and saveVisitedState as functions', () => {
-    expect(typeof listVisitedStates).toBe('function');
-    expect(typeof saveVisitedState).toBe('function');
+  it('exports listVisitedPlaces and saveVisitedPlace as functions', () => {
+    expect(typeof listVisitedPlaces).toBe('function');
+    expect(typeof saveVisitedPlace).toBe('function');
   });
 
-  it('listVisitedStates resolves to an empty array without calling fetch when session is null', async () => {
+  it('listVisitedPlaces resolves to an empty array without calling fetch when session is null', async () => {
     const fetchSpy = jest.fn();
     global.fetch = fetchSpy;
 
-    const result = await listVisitedStates(null);
+    const result = await listVisitedPlaces(null, 'us-state');
 
     expect(result).toEqual([]);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('saveVisitedState resolves without calling fetch when session is null', async () => {
+  it('saveVisitedPlace resolves without calling fetch when session is null', async () => {
     const fetchSpy = jest.fn();
     global.fetch = fetchSpy;
 
-    await expect(saveVisitedState(null, 'CA', true)).resolves.toBeUndefined();
+    await expect(saveVisitedPlace(null, 'us-state', 'CA', true)).resolves.toBeUndefined();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   // Feature: state-visit-tracker, Property 16: No session means no request is ever sent
-  it('saveVisitedState(null, stateId, visited) never calls fetch and always resolves, for any stateId/visited', async () => {
+  it('saveVisitedPlace(null, placeCategory, placeId, visited) never calls fetch and always resolves, for any placeCategory/placeId/visited', async () => {
     await fc.assert(
-      fc.asyncProperty(fc.string(), fc.boolean(), async (stateId, visited) => {
+      fc.asyncProperty(placeCategoryArbitrary, fc.string(), fc.boolean(), async (placeCategory, placeId, visited) => {
         const fetchSpy = jest.fn();
         global.fetch = fetchSpy;
 
-        await expect(saveVisitedState(null, stateId, visited)).resolves.toBeUndefined();
+        await expect(saveVisitedPlace(null, placeCategory, placeId, visited)).resolves.toBeUndefined();
         expect(fetchSpy).not.toHaveBeenCalled();
       }),
       { numRuns: 100 }
@@ -50,9 +54,9 @@ describe('visitRecordApiClient', () => {
   });
 
   // Feature: state-visit-tracker, Property 15: Every Visit_Record_API request carries the session's access token as the Authorization header
-  it('listVisitedStates always sends Authorization: <session.accessToken>', async () => {
+  it('listVisitedPlaces always sends Authorization: <session.accessToken>, for any placeCategory', async () => {
     await fc.assert(
-      fc.asyncProperty(sessionArbitrary, async (session) => {
+      fc.asyncProperty(sessionArbitrary, placeCategoryArbitrary, async (session, placeCategory) => {
         const fetchSpy = jest.fn().mockResolvedValue({
           ok: true,
           status: 200,
@@ -60,11 +64,11 @@ describe('visitRecordApiClient', () => {
         });
         global.fetch = fetchSpy;
 
-        await listVisitedStates(session);
+        await listVisitedPlaces(session, placeCategory);
 
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         const [url, init] = fetchSpy.mock.calls[0];
-        expect(url).toContain('placeType=us-state');
+        expect(url).toContain(`placeType=${placeCategory}`);
         expect(init.headers.Authorization).toBe(session.accessToken);
       }),
       { numRuns: 100 }
@@ -72,26 +76,27 @@ describe('visitRecordApiClient', () => {
   });
 
   // Feature: state-visit-tracker, Property 15: Every Visit_Record_API request carries the session's access token as the Authorization header
-  it('saveVisitedState always sends Authorization: <session.accessToken>', async () => {
+  it('saveVisitedPlace always sends Authorization: <session.accessToken>, for any placeCategory', async () => {
     await fc.assert(
       fc.asyncProperty(
         sessionArbitrary,
+        placeCategoryArbitrary,
         fc.string(),
         fc.boolean(),
-        async (session, stateId, visited) => {
+        async (session, placeCategory, placeId, visited) => {
           const fetchSpy = jest.fn().mockResolvedValue({
             ok: true,
             status: 200,
             json: () =>
               Promise.resolve({
                 username: session.username,
-                placeId: stateId,
+                placeId,
                 visited,
               }),
           });
           global.fetch = fetchSpy;
 
-          await saveVisitedState(session, stateId, visited);
+          await saveVisitedPlace(session, placeCategory, placeId, visited);
 
           expect(fetchSpy).toHaveBeenCalledTimes(1);
           const [, init] = fetchSpy.mock.calls[0];
@@ -102,30 +107,34 @@ describe('visitRecordApiClient', () => {
     );
   });
 
-  it('listVisitedStates requests a URL ending in /visit?placeType=us-state, while saveVisitedState requests the bare /visit URL with no query string', async () => {
-    const session = { username: 'alice', accessToken: 'token-123', expiresAt: Date.now() + 100000 };
+  it.each(['us-state', 'canada-state', 'country'])(
+    'listVisitedPlaces requests a URL ending in /visit?placeType=%s, while saveVisitedPlace requests the bare /visit URL with no query string',
+    async (placeCategory) => {
+      const session = { username: 'alice', accessToken: 'token-123', expiresAt: Date.now() + 100000 };
 
-    const listFetchSpy = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ placesVisited: [] }),
-    });
-    global.fetch = listFetchSpy;
-    await listVisitedStates(session);
-    const [listUrl] = listFetchSpy.mock.calls[0];
-    expect(listUrl).toMatch(/\/visit\?placeType=us-state$/);
+      const listFetchSpy = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ placesVisited: [] }),
+      });
+      global.fetch = listFetchSpy;
+      await listVisitedPlaces(session, placeCategory);
+      const [listUrl] = listFetchSpy.mock.calls[0];
+      expect(listUrl).toMatch(new RegExp(`/visit\\?placeType=${placeCategory}$`));
 
-    const saveFetchSpy = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ username: 'alice', placeId: 'CA', visited: true }),
-    });
-    global.fetch = saveFetchSpy;
-    await saveVisitedState(session, 'CA', true);
-    const [saveUrl] = saveFetchSpy.mock.calls[0];
-    expect(saveUrl).toMatch(/\/visit$/);
-    expect(saveUrl).not.toContain('?');
-  });
+      const saveFetchSpy = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ username: 'alice', placeId: 'CA', visited: true }),
+      });
+      global.fetch = saveFetchSpy;
+      await saveVisitedPlace(session, placeCategory, 'CA', true);
+      const [saveUrl, saveInit] = saveFetchSpy.mock.calls[0];
+      expect(saveUrl).toMatch(/\/visit$/);
+      expect(saveUrl).not.toContain('?');
+      expect(JSON.parse(saveInit.body).placeType).toBe(placeCategory);
+    }
+  );
 
   describe('timeout, failure, and auth-error classification', () => {
     const session = { username: 'alice', accessToken: 'token-123', expiresAt: Date.now() + 100000 };
@@ -135,104 +144,249 @@ describe('visitRecordApiClient', () => {
       jest.useRealTimers();
     });
 
-    it('listVisitedStates rejects with { kind: "TIMEOUT" } when the request is aborted after 10 seconds', async () => {
-      jest.useFakeTimers();
-      global.fetch = jest.fn((_url, init) => {
-        return new Promise((_resolve, reject) => {
-          init.signal.addEventListener('abort', () => {
-            reject({ name: 'AbortError' });
+    it.each(['us-state', 'canada-state', 'country'])(
+      'listVisitedPlaces rejects with { kind: "TIMEOUT" } when the request is aborted after 10 seconds (placeCategory=%s)',
+      async (placeCategory) => {
+        jest.useFakeTimers();
+        global.fetch = jest.fn((_url, init) => {
+          return new Promise((_resolve, reject) => {
+            init.signal.addEventListener('abort', () => {
+              reject({ name: 'AbortError' });
+            });
           });
         });
-      });
 
-      const promise = listVisitedStates(session);
-      const expectation = expect(promise).rejects.toEqual({ kind: 'TIMEOUT' });
-      await jest.advanceTimersByTimeAsync(10000);
-      await expectation;
-    });
+        const promise = listVisitedPlaces(session, placeCategory);
+        const expectation = expect(promise).rejects.toEqual({ kind: 'TIMEOUT' });
+        await jest.advanceTimersByTimeAsync(10000);
+        await expectation;
+      }
+    );
 
-    it('saveVisitedState rejects with { kind: "TIMEOUT" } when the request is aborted after 10 seconds', async () => {
-      jest.useFakeTimers();
-      global.fetch = jest.fn((_url, init) => {
-        return new Promise((_resolve, reject) => {
-          init.signal.addEventListener('abort', () => {
-            reject({ name: 'AbortError' });
+    it.each(['us-state', 'canada-state', 'country'])(
+      'saveVisitedPlace rejects with { kind: "TIMEOUT" } when the request is aborted after 10 seconds (placeCategory=%s)',
+      async (placeCategory) => {
+        jest.useFakeTimers();
+        global.fetch = jest.fn((_url, init) => {
+          return new Promise((_resolve, reject) => {
+            init.signal.addEventListener('abort', () => {
+              reject({ name: 'AbortError' });
+            });
           });
         });
-      });
 
-      const promise = saveVisitedState(session, 'CA', true);
-      const expectation = expect(promise).rejects.toEqual({ kind: 'TIMEOUT' });
-      await jest.advanceTimersByTimeAsync(10000);
-      await expectation;
-    });
+        const promise = saveVisitedPlace(session, placeCategory, 'CA', true);
+        const expectation = expect(promise).rejects.toEqual({ kind: 'TIMEOUT' });
+        await jest.advanceTimersByTimeAsync(10000);
+        await expectation;
+      }
+    );
 
-    it('listVisitedStates rejects with { kind: "FAILURE" } for a non-ok, non-401/403 response', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
+    it.each(['us-state', 'canada-state', 'country'])(
+      'listVisitedPlaces rejects with { kind: "FAILURE" } for a non-ok, non-401/403 response (placeCategory=%s)',
+      async (placeCategory) => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
 
-      await expect(listVisitedStates(session)).rejects.toEqual({ kind: 'FAILURE' });
-    });
+        await expect(listVisitedPlaces(session, placeCategory)).rejects.toEqual({ kind: 'FAILURE' });
+      }
+    );
 
-    it('saveVisitedState rejects with { kind: "FAILURE" } for a non-ok, non-401/403 response', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
+    it.each(['us-state', 'canada-state', 'country'])(
+      'saveVisitedPlace rejects with { kind: "FAILURE" } for a non-ok, non-401/403 response (placeCategory=%s)',
+      async (placeCategory) => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
 
-      await expect(saveVisitedState(session, 'CA', true)).rejects.toEqual({ kind: 'FAILURE' });
-    });
+        await expect(saveVisitedPlace(session, placeCategory, 'CA', true)).rejects.toEqual({ kind: 'FAILURE' });
+      }
+    );
 
-    it('listVisitedStates rejects with { kind: "FAILURE" } when fetch rejects outright (network error)', async () => {
+    it('listVisitedPlaces rejects with { kind: "FAILURE" } when fetch rejects outright (network error)', async () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('network error'));
 
-      await expect(listVisitedStates(session)).rejects.toEqual({ kind: 'FAILURE' });
+      await expect(listVisitedPlaces(session, 'us-state')).rejects.toEqual({ kind: 'FAILURE' });
     });
 
-    it('saveVisitedState rejects with { kind: "FAILURE" } when fetch rejects outright (network error)', async () => {
+    it('saveVisitedPlace rejects with { kind: "FAILURE" } when fetch rejects outright (network error)', async () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('network error'));
 
-      await expect(saveVisitedState(session, 'CA', true)).rejects.toEqual({ kind: 'FAILURE' });
+      await expect(saveVisitedPlace(session, 'us-state', 'CA', true)).rejects.toEqual({ kind: 'FAILURE' });
     });
 
-    it('listVisitedStates rejects with { kind: "FAILURE" } when the response body is malformed JSON', async () => {
+    it('listVisitedPlaces rejects with { kind: "FAILURE" } when the response body is malformed JSON', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
         json: () => Promise.reject(new Error('bad json')),
       });
 
-      await expect(listVisitedStates(session)).rejects.toEqual({ kind: 'FAILURE' });
+      await expect(listVisitedPlaces(session, 'us-state')).rejects.toEqual({ kind: 'FAILURE' });
     });
 
-    it('saveVisitedState rejects with { kind: "FAILURE" } when the response body is malformed JSON', async () => {
+    it('saveVisitedPlace rejects with { kind: "FAILURE" } when the response body is malformed JSON', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
         json: () => Promise.reject(new Error('bad json')),
       });
 
-      await expect(saveVisitedState(session, 'CA', true)).rejects.toEqual({ kind: 'FAILURE' });
+      await expect(saveVisitedPlace(session, 'us-state', 'CA', true)).rejects.toEqual({ kind: 'FAILURE' });
     });
 
-    it('listVisitedStates rejects with { kind: "AUTH_ERROR" } for a 401 response', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+    it.each(['us-state', 'canada-state', 'country'])(
+      'listVisitedPlaces rejects with { kind: "AUTH_ERROR" } for a 401 response (placeCategory=%s)',
+      async (placeCategory) => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
 
-      await expect(listVisitedStates(session)).rejects.toEqual({ kind: 'AUTH_ERROR' });
+        await expect(listVisitedPlaces(session, placeCategory)).rejects.toEqual({ kind: 'AUTH_ERROR' });
+      }
+    );
+
+    it.each(['us-state', 'canada-state', 'country'])(
+      'listVisitedPlaces rejects with { kind: "AUTH_ERROR" } for a 403 response (placeCategory=%s)',
+      async (placeCategory) => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 403 });
+
+        await expect(listVisitedPlaces(session, placeCategory)).rejects.toEqual({ kind: 'AUTH_ERROR' });
+      }
+    );
+
+    it.each(['us-state', 'canada-state', 'country'])(
+      'saveVisitedPlace rejects with { kind: "AUTH_ERROR" } for a 401 response (placeCategory=%s)',
+      async (placeCategory) => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+
+        await expect(saveVisitedPlace(session, placeCategory, 'CA', true)).rejects.toEqual({ kind: 'AUTH_ERROR' });
+      }
+    );
+
+    it.each(['us-state', 'canada-state', 'country'])(
+      'saveVisitedPlace rejects with { kind: "AUTH_ERROR" } for a 403 response (placeCategory=%s)',
+      async (placeCategory) => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 403 });
+
+        await expect(saveVisitedPlace(session, placeCategory, 'CA', true)).rejects.toEqual({ kind: 'AUTH_ERROR' });
+      }
+    );
+  });
+
+  describe('Property 32: every request sent while a category is selected carries that category\'s placeType', () => {
+    const session = { username: 'alice', accessToken: 'token-123', expiresAt: Date.now() + 100000 };
+
+    // An arbitrary describing one "operation" performed while a single
+    // Place_Category is selected: either a list call or a save
+    // (mark/unmark) call. The placeCategory itself is NOT part of this
+    // arbitrary -- it's threaded through separately, held constant for the
+    // whole generated sequence, matching design.md's framing of Property 32
+    // ("for any Place_Category and any sequence of ... operations performed
+    // while it is the Selected_Place_Category").
+    const operationArbitrary = fc.oneof(
+      fc.record({ type: fc.constant('list') }),
+      fc.record({
+        type: fc.constant('save'),
+        placeId: fc.string(),
+        visited: fc.boolean(),
+      })
+    );
+
+    // Captures every fetch call's URL/body as a { placeType } extracted
+    // from wherever the client puts it (query param for list, body field
+    // for save), regardless of which operation produced it.
+    function extractPlaceType(url, init) {
+      if (init.method === 'GET') {
+        const match = url.match(/placeType=([^&]+)/);
+        return match ? match[1] : undefined;
+      }
+      return JSON.parse(init.body).placeType;
+    }
+
+    // Feature: state-visit-tracker, Property 32: Every Visit_Record_API request sent while a category is selected carries that category's placeType
+    it('every request in a sequence of list/save operations run for a single fixed placeCategory carries that same placeCategory as its placeType', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          placeCategoryArbitrary,
+          fc.array(operationArbitrary, { minLength: 1, maxLength: 10 }),
+          async (placeCategory, operations) => {
+            const capturedPlaceTypes = [];
+            global.fetch = jest.fn((url, init) => {
+              capturedPlaceTypes.push(extractPlaceType(url, init));
+              if (init.method === 'GET') {
+                return Promise.resolve({
+                  ok: true,
+                  status: 200,
+                  json: () => Promise.resolve({ placesVisited: [] }),
+                });
+              }
+              return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ username: session.username, visited: true }),
+              });
+            });
+
+            for (const operation of operations) {
+              if (operation.type === 'list') {
+                await listVisitedPlaces(session, placeCategory);
+              } else {
+                await saveVisitedPlace(session, placeCategory, operation.placeId, operation.visited);
+              }
+            }
+
+            expect(capturedPlaceTypes).toHaveLength(operations.length);
+            capturedPlaceTypes.forEach((placeType) => {
+              expect(placeType).toBe(placeCategory);
+            });
+          }
+        ),
+        { numRuns: 100 }
+      );
     });
 
-    it('listVisitedStates rejects with { kind: "AUTH_ERROR" } for a 403 response', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 403 });
+    // An operation tagged with its OWN placeCategory, for the
+    // mixed-category interleaving variant below: proves that consecutive
+    // calls issued for different categories never leak or drift onto one
+    // another's placeType, which a single-fixed-category sequence alone
+    // couldn't distinguish from a client that (incorrectly) cached or
+    // shared placeType across calls.
+    const taggedOperationArbitrary = fc.tuple(placeCategoryArbitrary, operationArbitrary).map(
+      ([placeCategory, operation]) => ({ placeCategory, ...operation })
+    );
 
-      await expect(listVisitedStates(session)).rejects.toEqual({ kind: 'AUTH_ERROR' });
-    });
+    // Feature: state-visit-tracker, Property 32: Every Visit_Record_API request sent while a category is selected carries that category's placeType
+    it('every request in a sequence interleaving different placeCategories carries its own operation\'s placeCategory, never another operation\'s', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.array(taggedOperationArbitrary, { minLength: 1, maxLength: 10 }),
+          async (operations) => {
+            const capturedPlaceTypes = [];
+            global.fetch = jest.fn((url, init) => {
+              capturedPlaceTypes.push(extractPlaceType(url, init));
+              if (init.method === 'GET') {
+                return Promise.resolve({
+                  ok: true,
+                  status: 200,
+                  json: () => Promise.resolve({ placesVisited: [] }),
+                });
+              }
+              return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ username: session.username, visited: true }),
+              });
+            });
 
-    it('saveVisitedState rejects with { kind: "AUTH_ERROR" } for a 401 response', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+            for (const operation of operations) {
+              if (operation.type === 'list') {
+                await listVisitedPlaces(session, operation.placeCategory);
+              } else {
+                await saveVisitedPlace(session, operation.placeCategory, operation.placeId, operation.visited);
+              }
+            }
 
-      await expect(saveVisitedState(session, 'CA', true)).rejects.toEqual({ kind: 'AUTH_ERROR' });
-    });
-
-    it('saveVisitedState rejects with { kind: "AUTH_ERROR" } for a 403 response', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 403 });
-
-      await expect(saveVisitedState(session, 'CA', true)).rejects.toEqual({ kind: 'AUTH_ERROR' });
+            expect(capturedPlaceTypes).toEqual(operations.map((operation) => operation.placeCategory));
+          }
+        ),
+        { numRuns: 100 }
+      );
     });
   });
 });

@@ -208,10 +208,10 @@ In addition to US states, Coordinate_Commons lets a user track visited Canadian 
 
 #### Acceptance Criteria
 
-1. THE Coordinate_Commons SHALL display the My_Places_Control in the top navigation, positioned between the "Coordinate Commons" home control and the login/logout control.
+1. THE Coordinate_Commons SHALL display the My_Places_Control in the top navigation, positioned between the "Coordinate Commons" home control and the login/logout control, with the My_Places_Control and the login/logout control grouped together on the right side of the top navigation and the "Coordinate Commons" home control on the left.
 2. WHEN a user selects the My_Places_Control, THE Coordinate_Commons SHALL display a dropdown offering exactly three options: "US States", "Canadian Provinces", and "Countries".
 3. THE Selected_Place_Category SHALL default to US states when Coordinate_Commons first loads.
-4. THE My_Places_Control SHALL display the option corresponding to the current Selected_Place_Category as its visible label while the dropdown is closed, and SHALL indicate which of the three options corresponds to the Selected_Place_Category while the dropdown is open.
+4. THE My_Places_Control SHALL display the fixed label "My Places" while the dropdown is closed, and SHALL indicate which of the three options corresponds to the Selected_Place_Category while the dropdown is open.
 5. WHEN a user selects an option from the My_Places_Control dropdown, THE Coordinate_Commons SHALL set the Selected_Place_Category to the Place_Category corresponding to that option and SHALL display the Map_View, regardless of which page was displayed immediately before the selection and regardless of whether the selected option matches the Selected_Place_Category already in effect.
 6. THE My_Places_Control SHALL be available to both authenticated and unauthenticated users, per Requirement 9.
 7. WHEN a user dismisses the open My_Places_Control dropdown without selecting an option, THE Coordinate_Commons SHALL close the dropdown, SHALL leave the Selected_Place_Category unchanged, and SHALL leave the currently displayed page unchanged.

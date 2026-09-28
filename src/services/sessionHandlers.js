@@ -3,8 +3,8 @@
 //
 // Like `handleStateBoundaryClick` (src/components/handleStateBoundaryClick.js),
 // these are *pure orchestration functions*: they never call
-// `make-shared-state-hook`'s `useSession`/`useVisitedStateIds` hooks
-// directly and never touch the DOM or the network themselves. Each handler
+// `make-shared-state-hook`'s `useSession`/`useVisitedPlaceIdsByCategory`
+// hooks directly and never touch the DOM or the network themselves. Each handler
 // takes plain data in and returns the plain data the caller should apply to
 // shared state, which keeps them directly property-testable (design.md's
 // stated testability goal) without mocking React or the hooks module.
@@ -17,6 +17,11 @@
 /**
  * @typedef {Object.<string, true>} VisitedStateIds
  *
+ * @typedef {Object.<string, VisitedStateIds>} VisitedPlaceIdsByCategory
+ *   Matches `useVisitedPlaceIdsByCategory`'s shape in `sharedState.js`:
+ *   one `VisitedStateIds` slice per Place_Category, all three categories
+ *   always present (`'us-state'`, `'canada-state'`, `'country'`).
+ *
  * @typedef {Object} Session
  * @property {string} username
  * @property {string} accessToken
@@ -24,25 +29,32 @@
  */
 
 /**
- * Login-success handler (Requirement 1.6; design.md Property 2: "Successful
- * login discards prior visited-state data").
+ * Login-success handler (Requirement 1.6; design.md's "LoginPage /
+ * LoginForm" section and Property 2: "Successful login discards prior
+ * visited-place data for every category").
  *
  * `loginResult` is the Session object resolved by
  * `authenticationService.login()` (`{ username, accessToken, expiresAt }`).
- * Regardless of any `visitedStateIds` present before authentication
- * (including none/empty), the result always resets `visitedStateIds` to
- * `{}` — the prior value is unconditionally discarded, so this function
- * doesn't need it as an input. The caller (e.g. LoginPage, task 18.2) is
- * responsible for actually calling `useSession`'s setter and
- * `useVisitedStateIds`'s setter with this function's return values.
+ * Regardless of any `visitedPlaceIdsByCategory` present before
+ * authentication (including all-empty), the result always resets every
+ * category's slice to `{}` — the discard-on-login behavior is not itself
+ * category-scoped (design.md), so the prior value is unconditionally
+ * discarded and this function doesn't need it as an input. The caller
+ * (e.g. LoginPage, task 18.2) is responsible for actually calling
+ * `useSession`'s setter and replacing `useVisitedPlaceIdsByCategory`
+ * wholesale with this result's `visitedPlaceIdsByCategory` (task 31.1).
  *
  * @param {Session} loginResult - the resolved Session from `login()`.
- * @returns {{ session: Session, visitedStateIds: VisitedStateIds }}
+ * @returns {{ session: Session, visitedPlaceIdsByCategory: VisitedPlaceIdsByCategory }}
  */
 export function handleLoginSuccess(loginResult) {
   return {
     session: loginResult,
-    visitedStateIds: {},
+    visitedPlaceIdsByCategory: {
+      'us-state': {},
+      'canada-state': {},
+      country: {},
+    },
   };
 }
 
@@ -84,8 +96,8 @@ export function handleSessionCleared(reason) {
  * `visitedStateIds === {}` — like `handleLoginSuccess`, the outcome doesn't
  * depend on any prior state, so this function takes no arguments. The
  * caller (e.g. a logout control's click handler) is responsible for
- * actually calling `useSession`'s setter and `useVisitedStateIds`'s setter
- * with this function's return values.
+ * actually calling `useSession`'s setter and applying this result to the
+ * 'us-state' slice of `useVisitedPlaceIdsByCategory`'s setter (task 21.1).
  *
  * Delegates to `handleSessionCleared('LOGOUT')` so that manual logout and
  * the expiry/auth-error paths share one implementation of "what a session

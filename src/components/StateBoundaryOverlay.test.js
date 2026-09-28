@@ -12,12 +12,16 @@ import {
   DEFAULT_STROKE_WEIGHT,
   HOVERED_STROKE_WEIGHT,
 } from './StateBoundaryOverlay';
-import { useInfoPanelStateId, useVisitedStateIds } from '../state/sharedState';
+import {
+  useInfoPanelPlaceId,
+  useVisitedPlaceIdsByCategory,
+  useSelectedPlaceCategory,
+} from '../state/sharedState';
 import { VISITED_FILL_COLOR, NOT_VISITED_FILL_COLOR } from './resolveFillColor';
 
 const REGIONS = [
   {
-    stateId: 'CA',
+    placeId: 'CA',
     name: 'California',
     polygons: [
       [
@@ -29,7 +33,7 @@ const REGIONS = [
     ],
   },
   {
-    stateId: 'NV',
+    placeId: 'NV',
     name: 'Nevada',
     polygons: [
       [
@@ -102,13 +106,13 @@ describe('StateBoundaryOverlay - smoke test', () => {
     expect(map.addListener).not.toHaveBeenCalled();
   });
 
-  it('updates useInfoPanelStateId on mousemove hit and clears it on mouseout, on hover-capable devices', () => {
+  it('updates useInfoPanelPlaceId on mousemove hit and clears it on mouseout, on hover-capable devices', () => {
     setUpFakeGoogleMaps();
     const map = makeFakeMap();
 
     let infoPanelStateId;
     function Harness() {
-      [infoPanelStateId] = useInfoPanelStateId();
+      [infoPanelStateId] = useInfoPanelPlaceId();
       return <StateBoundaryOverlay map={map} regions={REGIONS} />;
     }
 
@@ -151,10 +155,10 @@ describe('StateBoundaryOverlay - smoke test', () => {
     const map = makeFakeMap();
 
     function Harness() {
-      const [, setVisitedStateIds] = useVisitedStateIds();
+      const [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
       React.useEffect(() => {
-        setVisitedStateIds({ CA: true });
-      }, [setVisitedStateIds]);
+        setVisitedPlaceIdsByCategory((previous) => ({ ...previous, 'us-state': { CA: true } }));
+      }, [setVisitedPlaceIdsByCategory]);
       return <StateBoundaryOverlay map={map} regions={REGIONS} />;
     }
 
@@ -165,25 +169,26 @@ describe('StateBoundaryOverlay - smoke test', () => {
   });
 
   it("updates the affected region's fill color synchronously (well within 1 second) via setOptions, without recreating any polygon, when visitedStateIds changes", () => {
-    // useVisitedStateIds is shared state that persists across tests in
-    // this file, so reset it to {} before this test's own assertions.
-    let resetSetVisitedStateIds;
+    // useVisitedPlaceIdsByCategory is shared state that persists across
+    // tests in this file, so reset its 'us-state' slice to {} before this
+    // test's own assertions.
+    let resetSetVisitedPlaceIdsByCategory;
     function ResetHarness() {
-      [, resetSetVisitedStateIds] = useVisitedStateIds();
+      [, resetSetVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
       return null;
     }
     render(<ResetHarness />);
     act(() => {
-      resetSetVisitedStateIds({});
+      resetSetVisitedPlaceIdsByCategory({ 'us-state': {}, 'canada-state': {}, country: {} });
     });
     cleanup();
 
     const polygons = setUpFakeGoogleMaps();
     const map = makeFakeMap();
 
-    let setVisitedStateIds;
+    let setVisitedPlaceIdsByCategory;
     function Harness() {
-      [, setVisitedStateIds] = useVisitedStateIds();
+      [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
       return <StateBoundaryOverlay map={map} regions={REGIONS} />;
     }
 
@@ -201,7 +206,7 @@ describe('StateBoundaryOverlay - smoke test', () => {
     // waitFor/timers needed, demonstrating the update happens well within
     // the 1-second bound of Requirement 6.2.
     act(() => {
-      setVisitedStateIds({ CA: true });
+      setVisitedPlaceIdsByCategory((previous) => ({ ...previous, 'us-state': { CA: true } }));
     });
 
     expect(caPolygon.setOptions).toHaveBeenCalledWith({ fillColor: VISITED_FILL_COLOR });
@@ -264,6 +269,80 @@ describe('StateBoundaryOverlay - smoke test', () => {
   });
 });
 
+describe('StateBoundaryOverlay - reads the visited-id slice for the Selected_Place_Category (task 29.1, Requirement 15.3)', () => {
+  it("colors a region visited only when it is visited within the CURRENT Selected_Place_Category's slice, ignoring a different category's slice with the same placeId marked visited", () => {
+    // Reset shared state (persists across tests in this file) so this
+    // test starts from a known baseline.
+    let resetSelectedPlaceCategory;
+    let resetVisitedPlaceIdsByCategory;
+    function ResetHarness() {
+      [, resetSelectedPlaceCategory] = useSelectedPlaceCategory();
+      [, resetVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+      return null;
+    }
+    render(<ResetHarness />);
+    act(() => {
+      resetSelectedPlaceCategory('us-state');
+      // 'CA' marked visited under 'canada-state' only -- must NOT affect
+      // the 'us-state' rendering below (Requirement 15.1/15.3).
+      resetVisitedPlaceIdsByCategory({
+        'us-state': {},
+        'canada-state': { CA: true },
+        country: {},
+      });
+    });
+    cleanup();
+
+    const polygons = setUpFakeGoogleMaps();
+    const map = makeFakeMap();
+
+    render(<StateBoundaryOverlay map={map} regions={REGIONS} />);
+
+    const [caPolygon] = polygons;
+    expect(caPolygon.options.fillColor).toBe(NOT_VISITED_FILL_COLOR);
+  });
+
+  it("re-colors using the newly Selected_Place_Category's slice when useSelectedPlaceCategory changes", () => {
+    let resetSelectedPlaceCategory;
+    let resetVisitedPlaceIdsByCategory;
+    function ResetHarness() {
+      [, resetSelectedPlaceCategory] = useSelectedPlaceCategory();
+      [, resetVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+      return null;
+    }
+    render(<ResetHarness />);
+    act(() => {
+      resetSelectedPlaceCategory('us-state');
+      resetVisitedPlaceIdsByCategory({
+        'us-state': {},
+        'canada-state': { CA: true },
+        country: {},
+      });
+    });
+    cleanup();
+
+    const polygons = setUpFakeGoogleMaps();
+    const map = makeFakeMap();
+
+    let setSelectedPlaceCategory;
+    function Harness() {
+      [, setSelectedPlaceCategory] = useSelectedPlaceCategory();
+      return <StateBoundaryOverlay map={map} regions={REGIONS} />;
+    }
+
+    render(<Harness />);
+
+    const [caPolygon] = polygons;
+    expect(caPolygon.options.fillColor).toBe(NOT_VISITED_FILL_COLOR);
+
+    act(() => {
+      setSelectedPlaceCategory('canada-state');
+    });
+
+    expect(caPolygon.setOptions).toHaveBeenCalledWith({ fillColor: VISITED_FILL_COLOR });
+  });
+});
+
 describe('StateBoundaryOverlay - Property 21 (touch-only devices)', () => {
   // Fixture points known (from the REGIONS fixture above) to fall inside
   // each region's polygon.
@@ -291,7 +370,7 @@ describe('StateBoundaryOverlay - Property 21 (touch-only devices)', () => {
 
         let infoPanelStateId;
         function Harness() {
-          [infoPanelStateId] = useInfoPanelStateId();
+          [infoPanelStateId] = useInfoPanelPlaceId();
           return <StateBoundaryOverlay map={map} regions={REGIONS} />;
         }
 

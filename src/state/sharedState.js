@@ -4,14 +4,39 @@ import { makeSharedStateHook } from 'make-shared-state-hook';
 // Session: null when signed out, otherwise { username, accessToken, expiresAt }
 export const useSession = makeSharedStateHook(React, null);
 
-// Visited states: an object map of { [stateId]: true } for O(1) membership checks
-export const useVisitedStateIds = makeSharedStateHook(React, {});
+// The single Place_Category currently displayed and tracked. Defaults to
+// 'us-state' (Requirement 13.3). Introduced by task 21.1 as the foundation
+// for the Place_Category-aware rename; nothing reads/writes this yet other
+// than defaulting every existing us-states-only call site to that one slice.
+export const useSelectedPlaceCategory = makeSharedStateHook(React, 'us-state');
 
-// Hover/last-click info panel target: null | stateId
-export const useInfoPanelStateId = makeSharedStateHook(React, null);
+// Visited places, partitioned by Place_Category first, then by placeId, for
+// O(1) membership checks scoped to a single category and to keep every
+// other category's data untouched when switching (Requirements 14.6, 15.1).
+// Replaces the former flat `useVisitedStateIds`'s `{ [stateId]: true }`
+// shape -- every existing call site now reads/writes only the 'us-state'
+// slice so existing behavior is unchanged (task 21.1).
+// { [placeCategory]: { [placeId]: true } }
+export const useVisitedPlaceIdsByCategory = makeSharedStateHook(React, {
+  'us-state': {},
+  'canada-state': {},
+  country: {},
+});
 
-// Set of stateIds with an in-flight save request: { [stateId]: true }
-export const usePendingStateIds = makeSharedStateHook(React, {});
+// Hover/last-click info panel target: null | placeId (scoped implicitly to
+// whichever category is Selected_Place_Category at read time -- see
+// PlaceInfoPanel, task 21.7). Renamed from `useInfoPanelStateId`.
+export const useInfoPanelPlaceId = makeSharedStateHook(React, null);
+
+// Set of placeIds with an in-flight save request, partitioned by
+// Place_Category the same way as useVisitedPlaceIdsByCategory:
+// { [placeCategory]: { [placeId]: true } }. Replaces the former flat
+// `usePendingStateIds`'s `{ [stateId]: true }` shape.
+export const usePendingPlaceIds = makeSharedStateHook(React, {
+  'us-state': {},
+  'canada-state': {},
+  country: {},
+});
 
 // Non-fatal, user-visible transient error banners (e.g. "update did not save")
 export const useToastError = makeSharedStateHook(React, null);

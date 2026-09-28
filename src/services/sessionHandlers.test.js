@@ -18,8 +18,8 @@ const loginResultArb = fc.record({
 });
 
 describe('handleLoginSuccess', () => {
-  // Feature: state-visit-tracker, Property 2: Successful login discards prior visited-state data
-  test('property: always yields an empty visitedStateIds map and a non-null Session populated from the login result, regardless of any prior visitedStateIds', () => {
+  // Feature: state-visit-tracker, Property 2: Successful login discards prior visited-place data for every category
+  test('property: always yields every category slice of visitedPlaceIdsByCategory empty and a non-null Session populated from the login result, regardless of any prior visitedStateIds', () => {
     fc.assert(
       fc.property(priorVisitedStateIdsArb, loginResultArb, (priorVisitedStateIds, loginResult) => {
         // priorVisitedStateIds is generated to demonstrate the property
@@ -28,7 +28,11 @@ describe('handleLoginSuccess', () => {
         // unconditionally rather than accepting it as input.
         const result = handleLoginSuccess(loginResult);
 
-        expect(result.visitedStateIds).toEqual({});
+        expect(result.visitedPlaceIdsByCategory).toEqual({
+          'us-state': {},
+          'canada-state': {},
+          country: {},
+        });
         expect(result.session).not.toBeNull();
         expect(result.session).toEqual(loginResult);
       }),

@@ -6,16 +6,16 @@
 // `google.maps.Polygon` per region, colored via `resolveFillColor`) and the
 // hover/hit-testing wiring:
 //   - exactly one `mousemove` and one `mouseout` listener on the `Map`
-//     object (not per-polygon), updating `useInfoPanelStateId` on
+//     object (not per-polygon), updating `useInfoPanelPlaceId` on
 //     hover-capable devices (Requirement 3.5, 6.2's prerequisite, 10.8's
-//     hover-capable branch handled by `StateInfoPanel`'s
+//     hover-capable branch handled by `PlaceInfoPanel`'s
 //     `useIsHoverCapable()`), and also thickening the hovered
 //     State_Boundary's border (restoring the previous border's weight when
 //     the hover target changes or clears), on the same hover-capable-only
 //     path (Requirement 10.9).
 //   - exactly one `click` listener on the `Map` object that resolves the
 //     hit region and, on touch-only (hover-incapable) devices, sets
-//     `useInfoPanelStateId` directly from the click (Requirement 10.8's
+//     `useInfoPanelPlaceId` directly from the click (Requirement 10.8's
 //     click branch). On any device, once a region is hit, it also invokes
 //     `onStateBoundaryClick(stateId)` -- an extension point wired up by
 //     task 14.6 (`MapView` passes in a callback built by
@@ -30,10 +30,14 @@
 // listener-registration or hit-testing logic.
 
 import React from 'react';
-import { useVisitedStateIds, useInfoPanelStateId } from '../state/sharedState';
+import {
+  useVisitedPlaceIdsByCategory,
+  useInfoPanelPlaceId,
+  useSelectedPlaceCategory,
+} from '../state/sharedState';
 import { resolveFillColor } from './resolveFillColor';
-import { resolveRegionAtLatLng } from '../data/stateBoundaries';
-import { useIsHoverCapable } from './StateInfoPanel';
+import { resolvePlaceBoundaryAtLatLng } from '../data/placeBoundaries';
+import { useIsHoverCapable } from './PlaceInfoPanel';
 
 // Default stroke (border) weight for an unhovered State_Boundary polygon --
 // extracted as a named constant now that a second stroke-weight value
@@ -59,7 +63,7 @@ function ringToPath(ring) {
 }
 
 /**
- * @param {import('../data/stateBoundaries').Region} region
+ * @param {import('../data/placeBoundaries').PlaceBoundary} region
  * @returns {{lat: number, lng: number}[][]}
  */
 function regionToPaths(region) {
@@ -79,8 +83,8 @@ function isGoogleMapsAvailable() {
  * @param {google.maps.Map | null} props.map - the created map instance
  *   (e.g. `MapView`'s `mapInstance` state, from `GoogleMapCanvas`'s
  *   `onMapReady`). Nothing is rendered until this is truthy.
- * @param {import('../data/stateBoundaries').Region[]} props.regions - the
- *   loaded region list (from `useRegionsLoader()`). Nothing is rendered
+ * @param {import('../data/placeBoundaries').PlaceBoundary[]} props.regions - the
+ *   loaded region list (from `usePlaceBoundariesLoader()`). Nothing is rendered
  *   until this is a non-empty array.
  * @param {(stateId: string) => void} [props.onStateBoundaryClick] - called
  *   with the clicked region's `stateId` whenever a click hits a region.
@@ -88,8 +92,13 @@ function isGoogleMapsAvailable() {
  *   wire in `handleStateBoundaryClick`.
  */
 export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () => {} }) {
-  const [visitedStateIds] = useVisitedStateIds();
-  const [, setInfoPanelStateId] = useInfoPanelStateId();
+  // Task 29.1 (Requirements 14.1, 15.3): reads only the Selected_Place_Category's
+  // slice of the per-category store, so the rendered fill colors always
+  // match whichever category's `regions` MapView passed in.
+  const [selectedPlaceCategory] = useSelectedPlaceCategory();
+  const [visitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+  const visitedStateIds = visitedPlaceIdsByCategory[selectedPlaceCategory];
+  const [, setInfoPanelStateId] = useInfoPanelPlaceId();
   const isHoverCapable = useIsHoverCapable();
 
   // The currently-constructed polygons, keyed by stateId, so the
@@ -98,7 +107,7 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
   const polygonsByStateIdRef = React.useRef({});
 
   // Tracks the most recently hovered stateId (or null) so mousemove only
-  // updates useInfoPanelStateId when the hit region actually changes,
+  // updates useInfoPanelPlaceId when the hit region actually changes,
   // avoiding redundant setter calls/re-renders.
   const lastHoveredStateIdRef = React.useRef(null);
 
@@ -134,7 +143,7 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
       const polygon = new googleMaps.Polygon({
         paths: regionToPaths(region),
         map,
-        fillColor: resolveFillColor(region.stateId, visitedStateIds),
+        fillColor: resolveFillColor(region.placeId, visitedStateIds),
         fillOpacity: 0.6,
         strokeColor: '#000000',
         strokeOpacity: 0.8,
@@ -143,11 +152,11 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
         // events itself, preventing them from ever reaching the map's own
         // click listener registered below. Since this design deliberately
         // uses a single map-level click listener (not one per polygon) so
-        // hit-testing goes through resolveRegionAtLatLng, every polygon
+        // hit-testing goes through resolvePlaceBoundaryAtLatLng, every polygon
         // must be non-clickable so its clicks fall through to the map.
         clickable: false,
       });
-      polygonsByStateId[region.stateId] = polygon;
+      polygonsByStateId[region.placeId] = polygon;
     });
 
     polygonsByStateIdRef.current = polygonsByStateId;
@@ -156,7 +165,7 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
       if (!isHoverCapableRef.current) {
         return;
       }
-      const hitStateId = resolveRegionAtLatLng(event.latLng, regionsRef.current);
+      const hitStateId = resolvePlaceBoundaryAtLatLng(event.latLng, regionsRef.current);
       if (hitStateId !== lastHoveredStateIdRef.current) {
         // Requirement 10.9: un-thicken the previously hovered region's
         // border and thicken the newly hovered region's border, via
@@ -189,7 +198,7 @@ export function StateBoundaryOverlay({ map, regions, onStateBoundaryClick = () =
     }
 
     function handleClick(event) {
-      const hitStateId = resolveRegionAtLatLng(event.latLng, regionsRef.current);
+      const hitStateId = resolvePlaceBoundaryAtLatLng(event.latLng, regionsRef.current);
       if (hitStateId == null) {
         // Requirement 3.6: no region hit -> no action taken.
         return;

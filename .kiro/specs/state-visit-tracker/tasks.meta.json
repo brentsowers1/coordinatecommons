@@ -39,6 +39,14 @@
     "5.7 Write property test for an authentication-error response clearing the session": {
       "status": "passed",
       "lastRunTimestamp": 1787576350157
+    },
+    "27.2 Write property test for every request carrying the Selected_Place_Category's placeType": {
+      "status": "passed",
+      "lastRunTimestamp": 1790547429206
+    },
+    "26.5 Write property test for stale in-flight results always being discarded without mutating the store": {
+      "status": "passed",
+      "lastRunTimestamp": 1790547984855
     }
   },
   "executionHistory": {
@@ -1294,6 +1302,737 @@
         "executionId": "28f5cd55-2961-4e91-b825-dc58c3e47b61",
         "chatSessionId": "sess_9006d1a5-898a-4ada-9c23-3a015ab20347",
         "timestamp": 1787580994645
+      }
+    ],
+    "21.1 Generalize `sharedState.js` for Place_Category-scoped state": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250158
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543262192
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543815522
+      }
+    ],
+    "21.2 Rename `stateBoundaries.js` to `placeBoundaries.js` and generalize its loader": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250235
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543819723
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544279943
+      }
+    ],
+    "21.3 Rename `resolveRegionAtLatLng` to `resolvePlaceBoundaryAtLatLng`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250291
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544296745
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544627921
+      }
+    ],
+    "21.4 Rename `resolveFillColor`'s parameter to a single category's slice": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250357
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543820431
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544280852
+      }
+    ],
+    "21.5 Rename `partitionRegionsByVisited` to `partitionPlaceBoundariesByVisited`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250402
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544297404
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544628960
+      }
+    ],
+    "21.6 Rename `handleStateBoundaryClick` to `handlePlaceBoundaryClick`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250448
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544298555
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544629687
+      }
+    ],
+    "21.7 Rename `StateInfoPanel` to `PlaceInfoPanel` and generalize `computeInfoPanelContent`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250504
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544787876
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545127564
+      }
+    ],
+    "21.8 Rename `VisitedStatesLists` (if present) to `PlaceVisitStatusLists`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250549
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544788565
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545318182
+      }
+    ],
+    "21.9 Rename `useVisitedStatesLoader.js` to `useVisitedPlacesLoader.js`, parameterized by `placeCategory`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250601
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543821545
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543829347
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544299332
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544630784
+      }
+    ],
+    "21.10 Rename `visitRecordApiClient.js`'s functions to accept a `placeCategory`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250648
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543822431
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790544281721
+      }
+    ],
+    "22. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250700
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545326028
+      },
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545352151
+      }
+    ],
+    "23.1 Add placeholder GeoJSON boundary assets for `canada-state` and `country`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250748
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545430795
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545706389
+      }
+    ],
+    "23.2 Extend `usePlaceBoundariesLoader(placeCategory)` to fetch the correct asset per category": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250792
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545715236
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546165433
+      }
+    ],
+    "23.3 Write property test for switching categories never issuing a duplicate request for already-loaded boundary data": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250844
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546170503
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546469903
+      }
+    ],
+    "24.1 Implement the `PLACE_CATEGORY_OPTIONS` constant and `MyPlacesControl` component": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250889
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545431381
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545707672
+      }
+    ],
+    "24.2 Implement selection and dismiss behavior in `MyPlacesControl`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543250931
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545715903
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546164800
+      }
+    ],
+    "24.3 Write property test for selection always setting a defined category, and dismiss never changing it": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251023
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546171372
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546469122
+      }
+    ],
+    "24.4 Wire `MyPlacesControl` into `TopNav`, positioned between the home control and the login/logout control": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251067
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546172200
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546468004
+      }
+    ],
+    "24.5 Write unit tests for `MyPlacesControl` UI and placement": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251115
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546475262
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546657163
+      }
+    ],
+    "25. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251169
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546665635
+      }
+    ],
+    "26.1 Implement the per-category loaded/loading/error state and cache reuse in `useVisitedPlacesLoader(placeCategory)`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251221
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546671337
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546894529
+      }
+    ],
+    "26.2 Implement the Stale Request Discard mechanism in `useVisitedPlacesLoader(placeCategory)` (and `usePlaceBoundariesLoader`)": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251266
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546899672
+      },
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547112203
+      }
+    ],
+    "26.3 Write property test for a category's slice always replaced with exactly what the API returned, leaving other categories untouched": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251313
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547261304
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547538982
+      }
+    ],
+    "26.4 Write property test for the Selected_Place_Category never mutating another category's stored records on switch": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251365
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547550184
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547804779
+      }
+    ],
+    "26.5 Write property test for stale in-flight results always being discarded without mutating the store": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251410
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547550901
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548064196
+      }
+    ],
+    "26.6 Write unit tests for the per-category loading/error/retry UI": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251456
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547551733
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547805277
+      }
+    ],
+    "27.1 Write property test for Visited_Place identity being scoped by (placeCategory, placeId)": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251502
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547260324
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547540324
+      }
+    ],
+    "27.2 Write property test for every request carrying the Selected_Place_Category's placeType": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251543
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547262007
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547540973
+      }
+    ],
+    "28. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251599
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548076395
+      }
+    ],
+    "29.1 Update `MapView` to select boundaries/visited-place slice by `useSelectedPlaceCategory()`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251644
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548081632
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548358060
+      }
+    ],
+    "29.2 Update `MapView`'s combined loading and error/retry UI to be scoped per Selected_Place_Category": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251692
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548523676
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548699005
+      }
+    ],
+    "29.3 Reset `useInfoPanelPlaceId` to `null` when `useSelectedPlaceCategory` changes": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251744
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548363201
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548519435
+      }
+    ],
+    "29.4 Write property test for exactly one category's boundaries ever being current after a switch": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251794
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548705306
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557258852
+      }
+    ],
+    "30.1 Verify/adjust `PlaceInfoPanel` reads `useSelectedPlaceCategory` and scopes both `placeBoundariesById` and `visitedPlaceIds` to it": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251844
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548706371
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557260167
+      }
+    ],
+    "30.2 Verify/adjust `PlaceVisitStatusLists` reads `useSelectedPlaceCategory` and scopes both `placeBoundaries` and `visitedPlaceIds` to it": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251892
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548707306
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557261694
+      }
+    ],
+    "31.1 Update the login-success handler in `sessionHandlers.js` to reset every category's slice of `useVisitedPlaceIdsByCategory` to `{}`": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251943
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557297951
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557514678
+      }
+    ],
+    "31.2 Write property test for login discarding prior visited-place data for every category": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543251987
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557538453
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557543068
+      }
+    ],
+    "32. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543252086
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557554685
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557636685
+      }
+    ],
+    "34. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790543252135
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557651805
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790558233424
+      }
+    ],
+    "21. Rename and generalize existing modules to Place_Category-aware symbol names": [
+      {
+        "executionId": "53be86e0-d653-480c-a5c8-fae89d126e27",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790545318551
+      }
+    ],
+    "23. Implement `usePlaceBoundariesLoader` per-category caching for the new Place_Categories": [
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546470365
+      }
+    ],
+    "24. Implement `MyPlacesControl` and `useSelectedPlaceCategory`": [
+      {
+        "executionId": "48c0c6d2-ab0a-492c-b4e8-81a42495502b",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790546657513
+      }
+    ],
+    "27. Implement cross-category Visited_Place identity isolation and placeType propagation": [
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790547541240
+      }
+    ],
+    "26. Implement per-category visited-place loading with cache reuse and stale-request discard": [
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790548064614
+      }
+    ],
+    "29. Wire `MapView`/`PlaceBoundaryOverlay` to render only the Selected_Place_Category's data": [
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557259292
+      }
+    ],
+    "30. Update `PlaceInfoPanel` and `PlaceVisitStatusLists` to read only the Selected_Place_Category's slice": [
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557261982
+      }
+    ],
+    "31. Update the login-success handler to clear every category's slice": [
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557543962
+      }
+    ],
+    "33. Write integration test for rapid category switching with out-of-order mocked resolution": [
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790557816199
+      },
+      {
+        "executionId": "eb882aa1-4996-49bc-9322-19453afee426",
+        "chatSessionId": "sess_06468624-fb42-47a2-96ab-f37f9cacb5fe",
+        "timestamp": 1790558232863
       }
     ]
   }

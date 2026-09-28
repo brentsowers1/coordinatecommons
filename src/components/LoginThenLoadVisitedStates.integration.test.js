@@ -11,16 +11,16 @@
 //     -> MapView (guest: no visited states fetch) -> user clicks "Log in"
 //     -> LoginPage/LoginForm
 //       -> authenticationService.login() (mocked) resolves a Session
-//         -> LoginPage's handleLoginSuccess sets useSession + clears
-//            useVisitedStateIds
+//         -> LoginPage's handleLoginSuccess sets useSession + clears the
+//            'us-state' slice of useVisitedPlaceIdsByCategory
 //           -> AuthGate observes session !== null, switches back to MapPage
 //             -> MapView (now with a non-null session) mounts
 //               useVisitedStatesLoader(session), which calls
 //               listVisitedStates(session) (mocked fetch) for the
 //               Visit_Record_API's /visit endpoint
 //                 -> once that load's status becomes 'ready', MapView's
-//                    sync effect applies the result to the SHARED
-//                    useVisitedStateIds store
+//                    sync effect applies the result to the 'us-state' slice
+//                    of the SHARED useVisitedPlaceIdsByCategory store
 //                      -> asserted here via a probe component, and (per
 //                         Requirement 6) is what StateBoundaryOverlay reads
 //                         to color the corresponding regions.
@@ -37,8 +37,8 @@ import { AuthGate } from './AuthGate';
 import { GOOGLE_MAPS_SCRIPT_ID } from './useGoogleMapsLoader';
 import {
   useSession,
-  useVisitedStateIds,
-  usePendingStateIds,
+  useVisitedPlaceIdsByCategory,
+  usePendingPlaceIds,
   useToastError,
 } from '../state/sharedState';
 
@@ -51,7 +51,7 @@ import { login } from '../services/authenticationService';
 
 // A small, valid FeatureCollection covering the two stateIds the mocked
 // Visit_Record_API will report as visited (CA, NY), matching the shape
-// useRegionsLoader()/parseRegionsFromGeoJson expect (see
+// usePlaceBoundariesLoader()/parseRegionsFromGeoJson expect (see
 // MapView.test.js's own REGIONS_FIXTURE for the same pattern).
 const REGIONS_FIXTURE = {
   type: 'FeatureCollection',
@@ -94,13 +94,13 @@ const REGIONS_FIXTURE = {
 function resetSharedState() {
   function Reset() {
     const [, setSession] = useSession();
-    const [, setVisitedStateIds] = useVisitedStateIds();
-    const [, setPendingStateIds] = usePendingStateIds();
+    const [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+    const [, setPendingPlaceIds] = usePendingPlaceIds();
     const [, setToastError] = useToastError();
     React.useEffect(() => {
       setSession(null);
-      setVisitedStateIds({});
-      setPendingStateIds({});
+      setVisitedPlaceIdsByCategory({ 'us-state': {}, 'canada-state': {}, country: {} });
+      setPendingPlaceIds({ 'us-state': {}, 'canada-state': {}, country: {} });
       setToastError(null);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -110,14 +110,19 @@ function resetSharedState() {
   unmount();
 }
 
-// Probe reading the SHARED useVisitedStateIds store -- this, not any
-// per-hook internal state, is what StateBoundaryOverlay actually renders
-// from (Requirement 6), so asserting against it is what confirms the
-// Requirement 4 load's result was actually wired into the app rather than
-// left stranded inside useVisitedStatesLoader's own return value.
+// Probe reading the SHARED useVisitedPlaceIdsByCategory store (the
+// 'us-state' slice, per task 21.1) -- this, not any per-hook internal
+// state, is what StateBoundaryOverlay actually renders from (Requirement
+// 6), so asserting against it is what confirms the Requirement 4 load's
+// result was actually wired into the app rather than left stranded inside
+// useVisitedStatesLoader's own return value.
 function VisitedStateIdsProbe() {
-  const [visitedStateIds] = useVisitedStateIds();
-  return <div data-testid="visited-state-ids-probe">{JSON.stringify(visitedStateIds)}</div>;
+  const [visitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
+  return (
+    <div data-testid="visited-state-ids-probe">
+      {JSON.stringify(visitedPlaceIdsByCategory['us-state'])}
+    </div>
+  );
 }
 
 function setUpFakeGoogleMaps() {
@@ -162,7 +167,7 @@ describe('Login followed by the Requirement 4 load (integration)', () => {
   it('populates the shared visited-state store with exactly the Visit_Record_API-returned states after a successful login', async () => {
     setUpFakeGoogleMaps();
 
-    // Distinguish the two fetch() consumers by URL: useRegionsLoader()
+    // Distinguish the two fetch() consumers by URL: usePlaceBoundariesLoader()
     // fetches the static boundary asset (relative path), while
     // visitRecordApiClient.listVisitedStates() fetches the configured
     // Visit_Record_API base URL + "/visit" (an absolute URL, per

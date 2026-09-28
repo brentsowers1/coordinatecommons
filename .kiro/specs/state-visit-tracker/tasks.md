@@ -234,12 +234,149 @@ This plan implements the Coordinate Commons front end in JavaScript/JSX (per des
 - [x] 20. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
+- [x] 21. Rename and generalize existing modules to Place_Category-aware symbol names
+  - [x] 21.1 Generalize `sharedState.js` for Place_Category-scoped state
+    - Add `useSelectedPlaceCategory` (default `'us-state'`); replace `useVisitedStateIds`'s flat `{ [stateId]: true }` shape with `useVisitedPlaceIdsByCategory`'s `{ 'us-state': {}, 'canada-state': {}, country: {} }` shape; replace `usePendingStateIds` with `usePendingPlaceIds` using the same per-category shape; rename `useInfoPanelStateId` to `useInfoPanelPlaceId`
+    - Update every existing call site of the renamed/reshaped hooks (`TopNav.jsx`, `sessionHandlers.js`, `StateBoundaryOverlay.js`, `handleStateBoundaryClick.js`, `computeInfoPanelContent.js`/`StateInfoPanel.jsx`, `partitionRegionsByVisited.js`/`VisitedStatesLists.jsx` if present, `useVisitedStatesLoader.js`, `LoginPage.jsx`) to read/write only the `'us-state'` slice so existing behavior is unchanged
+    - _Requirements: 15.1, 15.6_
+  - [x] 21.2 Rename `stateBoundaries.js` to `placeBoundaries.js` and generalize its loader
+    - Rename the `Region` shape to `PlaceBoundary` (`stateId` field renamed to `placeId`); rename `useRegionsLoader()` to `usePlaceBoundariesLoader(placeCategory)`, keyed internally by category so a second mount for an already-loaded category reuses its cached result instead of re-fetching; keep the existing `us-state` GeoJSON asset as that category's data
+    - _Requirements: 14.5_
+  - [x] 21.3 Rename `resolveRegionAtLatLng` to `resolvePlaceBoundaryAtLatLng`
+    - Update its parameter name (`regions` to `placeBoundaries`) and every call site; update the existing property test (Property 7) in place to use the new name/parameter without duplicating it
+    - _Requirements: 15.7_
+  - [x] 21.4 Rename `resolveFillColor`'s parameter to a single category's slice
+    - Rename its `stateId`/`visitedStateIds` parameters to `placeId`/`visitedPlaceIds`; update the existing property test (Property 14) in place to reflect the renamed parameters and the new "single category's slice" framing
+    - _Requirements: 15.3_
+  - [x] 21.5 Rename `partitionRegionsByVisited` to `partitionPlaceBoundariesByVisited`
+    - Update its parameter names (`regions`/`visitedStateIds` to `placeBoundaries`/`visitedPlaceIds`) and every call site; update the existing property test (Property 22) in place
+    - _Requirements: 15.5_
+  - [x] 21.6 Rename `handleStateBoundaryClick` to `handlePlaceBoundaryClick`
+    - Add a `placeCategory` parameter threaded through to the `saveVisitedPlace` call (see task 21.9); rename its other parameters (`visitedStateIds`/`pendingStateIds`/`stateId` to `visitedPlaceIdsForCategory`/`pendingPlaceIdsForCategory`/`placeId`); update the existing property tests (Properties 10-13) in place to pass a `placeCategory` and use the new parameter names, rather than duplicating them
+    - _Requirements: 15.2, 15.6_
+  - [x] 21.7 Rename `StateInfoPanel` to `PlaceInfoPanel` and generalize `computeInfoPanelContent`
+    - Rename `computeInfoPanelContent`'s parameters (`infoPanelStateId`/`regionsById`/`visitedStateIds` to `infoPanelPlaceId`/`placeBoundariesById`/`visitedPlaceIds`) and its returned `stateId` field to `placeId`; update `PlaceInfoPanel` to read `useInfoPanelPlaceId` and pass only the Selected_Place_Category's boundaries-by-id map and visited-id slice; update the existing property tests (Properties 18-21) and unit test in place
+    - _Requirements: 15.4_
+  - [x] 21.8 Rename `VisitedStatesLists` (if present) to `PlaceVisitStatusLists`
+    - Update it to read `useSelectedPlaceCategory` and pass only that category's `placeBoundaries`/visited-id slice into `partitionPlaceBoundariesByVisited`
+    - _Requirements: 15.5_
+  - [x] 21.9 Rename `useVisitedStatesLoader.js` to `useVisitedPlacesLoader.js`, parameterized by `placeCategory`
+    - Rename the exported hook to `useVisitedPlacesLoader(placeCategory)`; internally key its loaded/loading/error state and cached results by `placeCategory` so mounting it for an already-loaded category reuses that category's cached slice instead of re-fetching; keep existing `'us-state'` behavior (load-on-mount, guest path, load-success replace, retry) unchanged when called with `placeCategory: 'us-state'`
+    - _Requirements: 14.5, 15.7_
+  - [x] 21.10 Rename `visitRecordApiClient.js`'s functions to accept a `placeCategory`
+    - Rename `listVisitedStates(session)` to `listVisitedPlaces(session, placeCategory)`, appending `?placeType=<placeCategory>` instead of the hardcoded `?placeType=us-state`; rename `saveVisitedState(session, stateId, visited)` to `saveVisitedPlace(session, placeCategory, placeId, visited)`, sending `placeType: placeCategory` instead of the hardcoded `'us-state'` in the request body; update every call site to pass `'us-state'` explicitly so existing behavior is unchanged; update the existing property tests (Properties 15, 16) and unit tests in place to cover all three `placeCategory` values
+    - _Requirements: 15.2_
+
+- [x] 22. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 23. Implement `usePlaceBoundariesLoader` per-category caching for the new Place_Categories
+  - [x] 23.1 Add placeholder GeoJSON boundary assets for `canada-state` and `country`
+    - Create a minimal placeholder/stub GeoJSON asset for each of the two new categories (e.g. a small handful of valid `Feature`s with `placeId`/`name`/geometry) so `usePlaceBoundariesLoader` and its tests are not blocked; flag in a code comment that a real data source for these two categories is an open follow-up item per design.md, not permanent data
+    - _Requirements: 13.2, 13.4_
+  - [x] 23.2 Extend `usePlaceBoundariesLoader(placeCategory)` to fetch the correct asset per category
+    - Route each of the three `placeCategory` values to its own GeoJSON asset path; verify cache reuse (no re-fetch) when re-mounted for a category already `ready` this session
+    - _Requirements: 14.5_
+  - [x] 23.3 Write property test for switching categories never issuing a duplicate request for already-loaded boundary data
+    - **Property 28: Switching to an already-loaded category never issues a new request for its data**
+    - **Validates: Requirements 14.5**
+
+- [x] 24. Implement `MyPlacesControl` and `useSelectedPlaceCategory`
+  - [x] 24.1 Implement the `PLACE_CATEGORY_OPTIONS` constant and `MyPlacesControl` component
+    - Controlled dropdown showing the Selected_Place_Category's label as closed-state button text; on open, indicates which of the three options matches the current Selected_Place_Category; does not read `useSession`
+    - _Requirements: 13.2, 13.3, 13.4, 13.6_
+  - [x] 24.2 Implement selection and dismiss behavior in `MyPlacesControl`
+    - On selecting an option, call `useSelectedPlaceCategory`'s setter with that option's `placeCategory` regardless of whether it matches the value already in effect, and request navigation to `MapPage` via the same navigation callback prop pattern `TopNav`'s home control uses, regardless of which page was showing; on dismissing the dropdown without selecting (click-outside or Escape), close it without calling the setter or requesting navigation
+    - _Requirements: 13.5, 13.7_
+  - [x] 24.3 Write property test for selection always setting a defined category, and dismiss never changing it
+    - **Property 26: Selecting a My_Places_Control option always sets the Selected_Place_Category to a defined value, and dismissing never changes it**
+    - **Validates: Requirements 13.5, 13.7**
+  - [x] 24.4 Wire `MyPlacesControl` into `TopNav`, positioned between the home control and the login/logout control
+    - _Requirements: 13.1_
+  - [x] 24.5 Write unit tests for `MyPlacesControl` UI and placement
+    - Cover `TopNav` control ordering (13.1), the dropdown showing exactly three options with the current selection indicated (13.2, 13.4), and that it renders identically for authenticated and unauthenticated sessions (13.6)
+    - _Requirements: 13.1, 13.2, 13.4, 13.6_
+
+- [x] 25. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 26. Implement per-category visited-place loading with cache reuse and stale-request discard
+  - [x] 26.1 Implement the per-category loaded/loading/error state and cache reuse in `useVisitedPlacesLoader(placeCategory)`
+    - Skip re-issuing `listVisitedPlaces` for a category already `ready` or currently `loading`; skip the API call entirely for an unauthenticated session per category, preserving any existing local slice; replace exactly that category's slice on success, leaving every other category's slice untouched
+    - _Requirements: 14.2, 14.4, 14.5, 14.6_
+  - [x] 26.2 Implement the Stale Request Discard mechanism in `useVisitedPlacesLoader(placeCategory)` (and `usePlaceBoundariesLoader`)
+    - On settling, compare the request's closure-captured `placeCategory` against the current `useSelectedPlaceCategory()` value; if they differ, discard the result without writing to `useVisitedPlaceIdsByCategory` or changing that category's cached status
+    - _Requirements: 14.7_
+  - [x] 26.3 Write property test for a category's slice always replaced with exactly what the API returned, leaving other categories untouched
+    - **Property 8: Loading visited places for a category replaces that category's slice with exactly what the API returned**
+    - **Validates: Requirements 4.3, 14.6**
+  - [x] 26.4 Write property test for the Selected_Place_Category never mutating another category's stored records on switch
+    - **Property 29: Switching the Selected_Place_Category never mutates any other category's stored Visited_Place records**
+    - **Validates: Requirements 14.6**
+  - [x] 26.5 Write property test for stale in-flight results always being discarded without mutating the store
+    - **Property 30: A stale in-flight request's result is always discarded without mutating the store**
+    - **Validates: Requirements 14.7**
+  - [x] 26.6 Write unit tests for the per-category loading/error/retry UI
+    - Cover the loading indicator remaining visible until both the map script and the Selected_Place_Category's boundary fetch are ready, and the error/retry control identifying which source(s) failed, scoped to the Selected_Place_Category
+    - _Requirements: 14.2, 14.3, 14.4_
+
+- [x] 27. Implement cross-category Visited_Place identity isolation and placeType propagation
+  - [x] 27.1 Write property test for Visited_Place identity being scoped by (placeCategory, placeId)
+    - **Property 31: Visited_Place identity is scoped by (placeCategory, placeId); marking one category's place never marks another category's place of the same id**
+    - **Validates: Requirements 15.1, 15.6**
+  - [x] 27.2 Write property test for every request carrying the Selected_Place_Category's placeType
+    - **Property 32: Every Visit_Record_API request sent while a category is selected carries that category's placeType**
+    - **Validates: Requirements 15.2**
+
+- [x] 28. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 29. Wire `MapView`/`PlaceBoundaryOverlay` to render only the Selected_Place_Category's data
+  - [x] 29.1 Update `MapView` to select boundaries/visited-place slice by `useSelectedPlaceCategory()`
+    - Pass only the Selected_Place_Category's `placeBoundaries` (from `usePlaceBoundariesLoader(selectedPlaceCategory)`) and visited-id slice (from `useVisitedPlaceIdsByCategory()[selectedPlaceCategory]`) into `PlaceBoundaryOverlay`; tear down the previous category's polygons/listeners on a category switch
+    - _Requirements: 14.1, 15.3_
+  - [x] 29.2 Update `MapView`'s combined loading and error/retry UI to be scoped per Selected_Place_Category
+    - Loading indicator remains visible until the map script and that category's boundary fetch are both ready; error/retry control identifies which source(s) failed and retries only the failed source(s), for the currently Selected_Place_Category
+    - _Requirements: 14.2, 14.3, 14.4_
+  - [x] 29.3 Reset `useInfoPanelPlaceId` to `null` when `useSelectedPlaceCategory` changes
+    - _Requirements: 15.4_
+  - [x] 29.4 Write property test for exactly one category's boundaries ever being current after a switch
+    - **Property 27: Switching the Selected_Place_Category always results in exactly one category's boundaries being current**
+    - **Validates: Requirements 14.1**
+
+- [x] 30. Update `PlaceInfoPanel` and `PlaceVisitStatusLists` to read only the Selected_Place_Category's slice
+  - [x] 30.1 Verify/adjust `PlaceInfoPanel` reads `useSelectedPlaceCategory` and scopes both `placeBoundariesById` and `visitedPlaceIds` to it
+    - _Requirements: 15.4_
+  - [x] 30.2 Verify/adjust `PlaceVisitStatusLists` reads `useSelectedPlaceCategory` and scopes both `placeBoundaries` and `visitedPlaceIds` to it
+    - _Requirements: 15.5_
+  - [ ]* 30.3 Write unit tests for `PlaceInfoPanel` and `PlaceVisitStatusLists` reflecting only the Selected_Place_Category's data after a category switch
+    - _Requirements: 15.4, 15.5_
+
+- [x] 31. Update the login-success handler to clear every category's slice
+  - [x] 31.1 Update the login-success handler in `sessionHandlers.js` to reset every category's slice of `useVisitedPlaceIdsByCategory` to `{}`
+    - _Requirements: 1.6_
+  - [x] 31.2 Write property test for login discarding prior visited-place data for every category
+    - **Property 2: Successful login discards prior visited-place data for every category**
+    - **Validates: Requirements 1.6**
+
+- [x] 32. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x]* 33. Write integration test for rapid category switching with out-of-order mocked resolution
+  - Switch the Selected_Place_Category twice in quick succession (e.g. `us-state` → `canada-state` → `country`) before the first switch's mocked `listVisitedPlaces`/boundary-fetch resolves, resolve the mocks out of order, and assert the discarded category's data never appears in `useVisitedPlaceIdsByCategory` or on the rendered map, while the finally-selected category's own load still completes and renders normally
+  - _Requirements: 14.7_
+
+- [x] 34. Final checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
 ## Notes
 
 - Tasks marked with `*` are optional (tests) and can be skipped for a faster MVP; core implementation tasks are never optional.
-- Every property test corresponds 1:1 to one of the 21 correctness properties in design.md and must be implemented with `fast-check`, minimum 100 runs, tagged with a comment referencing its property (e.g. `// Feature: state-visit-tracker, Property 7: Region hit-testing resolves clicks to exactly the containing region, or none`).
-- `sessionHandlers.js`, `useVisitedStatesLoader.js`, and `stateBoundaries.js` are each touched by more than one task; those tasks are sequenced so no two run concurrently against the same file.
+- Every property test corresponds 1:1 to one of the 32 correctness properties in design.md and must be implemented with `fast-check`, minimum 100 runs, tagged with a comment referencing its property (e.g. `// Feature: state-visit-tracker, Property 7: Place boundary hit-testing resolves clicks to exactly the containing boundary, or none`).
+- `sessionHandlers.js`, `useVisitedStatesLoader.js`/`useVisitedPlacesLoader.js`, and `stateBoundaries.js`/`placeBoundaries.js` are each touched by more than one task; those tasks are sequenced so no two run concurrently against the same file.
 - `StateBoundaryOverlay.js` is written first in task 12.5 (rendering + hit-testing wiring) and revisited in task 14.6 (toggle-handler wiring) once `handleStateBoundaryClick` exists.
+- Tasks 21.1-21.10 rename/generalize files and hooks that earlier, already-completed tasks (1-20) created for the US-states-only version; they are written as explicit rename/refactor tasks rather than silent rewrites of the historical plan, and each instructs updating (not duplicating) that symbol's existing property/unit tests in place.
+- The `canada-state`/`country` boundary GeoJSON data source is an open item (task 23.1 uses a placeholder/stub asset); replacing it with a real data source is a follow-up not covered by this plan.
 
 ## Task Dependency Graph
 
@@ -255,7 +392,24 @@ This plan implements the Coordinate Commons front end in JavaScript/JSX (per des
     { "id": 6, "tasks": ["5.6", "5.7", "5.8", "8.5", "17.3"] },
     { "id": 7, "tasks": ["17.4", "19.1"] },
     { "id": 8, "tasks": ["19.2"] },
-    { "id": 9, "tasks": ["19.3"] }
+    { "id": 9, "tasks": ["19.3"] },
+    { "id": 10, "tasks": ["21.1"] },
+    { "id": 11, "tasks": ["21.2", "21.4", "21.9", "21.10"] },
+    { "id": 12, "tasks": ["21.3", "21.5", "21.6"] },
+    { "id": 13, "tasks": ["21.7", "21.8"] },
+    { "id": 14, "tasks": ["23.1", "24.1"] },
+    { "id": 15, "tasks": ["23.2", "24.2"] },
+    { "id": 16, "tasks": ["23.3", "24.3", "24.4"] },
+    { "id": 17, "tasks": ["24.5"] },
+    { "id": 18, "tasks": ["26.1"] },
+    { "id": 19, "tasks": ["26.2"] },
+    { "id": 20, "tasks": ["26.3", "26.4", "26.5", "26.6", "27.1", "27.2"] },
+    { "id": 21, "tasks": ["29.1"] },
+    { "id": 22, "tasks": ["29.2", "29.3"] },
+    { "id": 23, "tasks": ["29.4", "30.1", "30.2"] },
+    { "id": 24, "tasks": ["30.3", "31.1"] },
+    { "id": 25, "tasks": ["31.2"] },
+    { "id": 26, "tasks": ["33"] }
   ]
 }
 ```

@@ -11,27 +11,27 @@ describe('resolveFillColor', () => {
     expect(VISITED_FILL_COLOR).not.toBe(NOT_VISITED_FILL_COLOR);
   });
 
-  // Feature: state-visit-tracker, Property 14: Fill color is exactly one of two fixed, distinct colors, determined solely by membership
-  test('property: returns VISITED_FILL_COLOR iff stateId is an own key of visitedStateIds, otherwise NOT_VISITED_FILL_COLOR', () => {
+  // Feature: state-visit-tracker, Property 14: Fill color is exactly one of two fixed, distinct colors, determined solely by membership in the current category's slice
+  test('property: returns VISITED_FILL_COLOR iff placeId is an own key of visitedPlaceIds (a single category\'s slice), otherwise NOT_VISITED_FILL_COLOR', () => {
     fc.assert(
       fc.property(
         fc.string(),
         fc.dictionary(fc.string(), fc.constant(true)),
         fc.boolean(),
-        (stateId, baseVisitedStateIds, includeStateId) => {
-          const visitedStateIds = includeStateId
-            ? { ...baseVisitedStateIds, [stateId]: true }
+        (placeId, baseVisitedPlaceIds, includePlaceId) => {
+          const visitedPlaceIds = includePlaceId
+            ? { ...baseVisitedPlaceIds, [placeId]: true }
             : (() => {
-                // Ensure stateId is definitely absent even if the base map
+                // Ensure placeId is definitely absent even if the base map
                 // happened to include it.
-                const { [stateId]: _omitted, ...rest } = baseVisitedStateIds;
+                const { [placeId]: _omitted, ...rest } = baseVisitedPlaceIds;
                 return rest;
               })();
 
-          const result = resolveFillColor(stateId, visitedStateIds);
+          const result = resolveFillColor(placeId, visitedPlaceIds);
           const isVisited = Object.prototype.hasOwnProperty.call(
-            visitedStateIds,
-            stateId
+            visitedPlaceIds,
+            placeId
           );
 
           expect(result).toBe(

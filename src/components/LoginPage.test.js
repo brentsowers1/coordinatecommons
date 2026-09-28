@@ -16,7 +16,7 @@
 // `jest.requireActual`) so LoginForm's client-side validation still lets a
 // well-formed username/password through to `onSubmit`.
 //
-// Shared-state note: `useSession`/`useVisitedStateIds` (from
+// Shared-state note: `useSession`/`useVisitedPlaceIdsByCategory` (from
 // `make-shared-state-hook`) hold their value at module scope, so it
 // persists across tests within this file (Jest isolates modules per test
 // *file*, not per test). A `beforeEach` resets both back to their initial
@@ -26,7 +26,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 import { LoginPage } from './LoginPage';
-import { useSession, useVisitedStateIds } from '../state/sharedState';
+import { useSession, useVisitedPlaceIdsByCategory } from '../state/sharedState';
 
 jest.mock('../services/authenticationService', () => ({
   ...jest.requireActual('../services/authenticationService'),
@@ -40,10 +40,10 @@ const TIMEOUT_MESSAGE = 'The login attempt could not be completed. Please try ag
 
 function ResetSharedState() {
   const [, setSession] = useSession();
-  const [, setVisitedStateIds] = useVisitedStateIds();
+  const [, setVisitedPlaceIdsByCategory] = useVisitedPlaceIdsByCategory();
   React.useEffect(() => {
     setSession(null);
-    setVisitedStateIds({});
+    setVisitedPlaceIdsByCategory({ 'us-state': {}, 'canada-state': {}, country: {} });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return null;
