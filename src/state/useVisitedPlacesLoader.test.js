@@ -1,6 +1,10 @@
 import fc from 'fast-check';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { useVisitedPlacesLoader, toVisitedStateIdsMap } from './useVisitedPlacesLoader';
+import {
+  useVisitedPlacesLoader,
+  toVisitedStateIdsMap,
+  updateVisitedPlacesCache,
+} from './useVisitedPlacesLoader';
 
 // Smoke tests for the authenticated load-on-mount effect, status/retry
 // plumbing (task 8.1), and the load-success map-shaping (task 8.2).
@@ -795,4 +799,63 @@ describe('Property 30: stale in-flight results are always discarded', () => {
     },
     30000
   );
+});
+
+// Bugfix regression tests: updateVisitedPlacesCache (exported so
+// useStateBoundaryClickHandler can keep this module's per-category cache in
+// sync with direct writes it makes to the Shared_State_Store after a save
+// settles -- see that export's doc comment above for the full bug this
+// closes: a stale cache entry being reapplied over freshly-saved data when
+// switching Selected_Place_Category away and back).
+describe('updateVisitedPlacesCache', () => {
+  afterEach(() => {
+    global.fetch = undefined;
+  });
+
+  const session = { username: 'alice', accessToken: 'token', expiresAt: Date.now() + 100000 };
+
+  it('writes/overwrites the cache entry for a category, so a subsequent mount reports ready with exactly that data without calling fetch', async () => {
+    const category = 'us-state-test-update-cache-direct';
+    const fetchSpy = jest.fn();
+    global.fetch = fetchSpy;
+
+    updateVisitedPlacesCache(category, { NY: true, NJ: true });
+
+    const { result, unmount } = renderHook(() => useVisitedPlacesLoader(session, category));
+
+    expect(result.current.status).toBe('ready');
+    expect(result.current.visitedPlaceIds).toEqual({ NY: true, NJ: true });
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it('overwrites a previously-cached (e.g. stale pre-save) entry for the same category', async () => {
+    const category = 'us-state-test-update-cache-overwrite';
+
+    // Populate the cache the normal way (a real successful load).
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ placesVisited: [] }),
+    });
+    const first = renderHook(() => useVisitedPlacesLoader(session, category));
+    await waitFor(() => expect(first.result.current.status).toBe('ready'));
+    expect(first.result.current.visitedPlaceIds).toEqual({});
+    first.unmount();
+
+    // Simulate a save settling: directly update the cache to reflect the
+    // new authoritative membership map for this category.
+    updateVisitedPlacesCache(category, { CA: true });
+
+    const fetchSpy = jest.fn();
+    global.fetch = fetchSpy;
+
+    const second = renderHook(() => useVisitedPlacesLoader(session, category));
+    expect(second.result.current.status).toBe('ready');
+    expect(second.result.current.visitedPlaceIds).toEqual({ CA: true });
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    second.unmount();
+  });
 });

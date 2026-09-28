@@ -69,18 +69,13 @@ export const CANADA_PROVINCE_BOUNDARIES_GEOJSON_ASSET_PATH = '/data/canadaProvin
  */
 export const COUNTRY_BOUNDARIES_GEOJSON_ASSET_PATH = '/data/countryBoundaries.geojson.json';
 
-// PLACEHOLDER DATA (task 23.1, routed for real by task 23.2):
-// `src/data/canadaProvinceBoundaries.geojson.json` and
-// `src/data/countryBoundaries.geojson.json` are still placeholder/stub
-// assets while a real data source for the `'canada-state'` and `'country'`
-// categories remains an open follow-up item (see design.md's "Boundary
-// data source (open item)" note). Each file has a small handful of
-// Features with real, recognizable `name`/`stateId` values (Canadian
-// province codes and ISO country codes, respectively), but their
-// `geometry` polygons are simple placeholder rectangles, NOT real
-// geographic boundaries. Do not treat either file as production-ready
-// data. Routing below is real: each placeCategory now fetches its own
-// asset.
+// `src/data/canadaProvinceBoundaries.geojson.json` (13 Canadian
+// provinces/territories) and `src/data/countryBoundaries.geojson.json`
+// (180 countries) contain real, simplified/low-resolution boundary data
+// (see design.md's "Boundary data source (resolved)" note for sources and
+// attribution), transformed offline into this module's expected
+// `{properties: {stateId, name}, geometry}` FeatureCollection shape. Each
+// placeCategory fetches its own asset via the routing below.
 /**
  * Resolves the GeoJSON asset path to fetch for a given `placeCategory`.
  *

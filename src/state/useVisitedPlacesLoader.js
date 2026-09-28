@@ -143,6 +143,34 @@ export function toVisitedStateIdsMap(placeIds) {
 const visitedPlacesCacheByCategory = new Map();
 
 /**
+ * Bugfix: keeps `visitedPlacesCacheByCategory` in sync with direct writes
+ * made to the Shared_State_Store outside of this hook's own load effect --
+ * specifically, `useStateBoundaryClickHandler.js` writes a save's resolved
+ * membership map straight to `useVisitedPlaceIdsByCategory` (sharedState.js)
+ * without going through this hook at all. Before this existed, that write
+ * left this module's cache holding stale pre-save data for that category;
+ * switching Selected_Place_Category away and back would remount
+ * `useVisitedPlacesLoader` for that category, which would happily reuse the
+ * (now-stale) cache entry and report it as `status: 'ready'`, and a
+ * downstream effect (MapView) would then reapply that stale data over the
+ * shared store, clobbering the just-saved place until a full reload. Calling
+ * this after a save settles (success or reverted-failure) keeps the cache
+ * exactly in step with what's actually been persisted, so a later
+ * switch-back never reintroduces stale data.
+ *
+ * @param {string} placeCategory
+ * @param {{ [placeId: string]: true }} visitedPlaceIds - the authoritative
+ *   current membership map for this category (e.g. `settled.visitedPlaceIdsForCategory`
+ *   from `handlePlaceBoundaryClick`'s resolved result).
+ */
+export function updateVisitedPlacesCache(placeCategory, visitedPlaceIds) {
+  visitedPlacesCacheByCategory.set(placeCategory, {
+    status: 'ready',
+    visitedPlaceIds,
+  });
+}
+
+/**
  * Module-level map of in-flight `listVisitedPlaces` promises, keyed by
  * `placeCategory`. `visitedPlacesCacheByCategory` above only ever holds
  * *completed* (`status: 'ready'`) results, so on its own it cannot prevent

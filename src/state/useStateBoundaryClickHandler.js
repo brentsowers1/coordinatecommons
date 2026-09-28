@@ -53,6 +53,7 @@ import {
 } from './sharedState';
 import { handlePlaceBoundaryClick } from '../components/handlePlaceBoundaryClick';
 import { saveVisitedPlace } from '../services/visitRecordApiClient';
+import { updateVisitedPlacesCache } from './useVisitedPlacesLoader';
 
 // Task 21.6/21.10: `handlePlaceBoundaryClick` threads an explicit
 // `placeCategory` through to `apiClient.saveVisitedState`, matching
@@ -121,6 +122,14 @@ export function useStateBoundaryClickHandler(apiClient = defaultApiClient) {
           ...previous,
           [selectedPlaceCategory]: settled.pendingPlaceIdsForCategory,
         }));
+        // Bugfix: keep useVisitedPlacesLoader's per-category cache in sync
+        // with this settled (authoritative) result too -- on BOTH the
+        // success path and the reverted-failure path, settled.visitedPlaceIdsForCategory
+        // is the current truth for this category -- so a later switch away
+        // from and back to selectedPlaceCategory doesn't remount
+        // useVisitedPlacesLoader into reporting stale pre-save data (see
+        // updateVisitedPlacesCache's doc comment in useVisitedPlacesLoader.js).
+        updateVisitedPlacesCache(selectedPlaceCategory, settled.visitedPlaceIdsForCategory);
         if (settled.toastError != null) {
           setToastError(settled.toastError);
         }

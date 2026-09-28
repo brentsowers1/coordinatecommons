@@ -7,9 +7,10 @@
 // error on revert (Requirements 5.3, 9.4).
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, renderHook } from '@testing-library/react';
 
 import { useStateBoundaryClickHandler } from './useStateBoundaryClickHandler';
+import { useVisitedPlacesLoader, updateVisitedPlacesCache } from './useVisitedPlacesLoader';
 import {
   useSession,
   useSelectedPlaceCategory,
@@ -17,6 +18,14 @@ import {
   usePendingPlaceIds,
   useToastError,
 } from './sharedState';
+
+jest.mock('./useVisitedPlacesLoader', () => {
+  const actual = jest.requireActual('./useVisitedPlacesLoader');
+  return {
+    ...actual,
+    updateVisitedPlacesCache: jest.fn(actual.updateVisitedPlacesCache),
+  };
+});
 
 function Harness({ apiClient, category = 'us-state' }) {
   const onStateBoundaryClick = useStateBoundaryClickHandler(apiClient);
@@ -64,6 +73,7 @@ function resetSharedState() {
 
 beforeEach(() => {
   resetSharedState();
+  updateVisitedPlacesCache.mockClear();
 });
 
 describe('useStateBoundaryClickHandler', () => {
@@ -211,4 +221,120 @@ describe('useStateBoundaryClickHandler', () => {
       JSON.stringify({}) + JSON.stringify({})
     );
   });
+
+  // Bugfix regression tests: this hook must keep useVisitedPlacesLoader's
+  // per-category cache (updateVisitedPlacesCache) in sync with the settled
+  // (authoritative) result on BOTH the success path and the
+  // reverted-failure path, so a later switch away from and back to this
+  // category never causes useVisitedPlacesLoader to reapply stale
+  // pre-save data over the shared store (see useVisitedPlacesLoader.js's
+  // updateVisitedPlacesCache doc comment for the full bug).
+  it('calls updateVisitedPlacesCache with the correct category and final map once a successful save settles', async () => {
+    const apiClient = { saveVisitedState: jest.fn().mockResolvedValue(undefined) };
+    render(<Harness apiClient={apiClient} category="canada-state" />);
+
+    function CategorySetter() {
+      const [, setSelectedPlaceCategory] = useSelectedPlaceCategory();
+      React.useEffect(() => {
+        setSelectedPlaceCategory('canada-state');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+      return null;
+    }
+    render(<CategorySetter />);
+
+    fireEvent.click(screen.getByText('sign in'));
+
+    // Not called yet from the optimistic (pre-settle) update.
+    fireEvent.click(screen.getByText('click CA'));
+    expect(updateVisitedPlacesCache).not.toHaveBeenCalled();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('pending').textContent).toBe(JSON.stringify({}))
+    );
+
+    expect(updateVisitedPlacesCache).toHaveBeenCalledTimes(1);
+    expect(updateVisitedPlacesCache).toHaveBeenCalledWith('canada-state', { CA: true });
+  });
+
+  it('calls updateVisitedPlacesCache with the reverted map once a failed save settles', async () => {
+    const apiClient = { saveVisitedState: jest.fn().mockRejectedValue({ kind: 'FAILURE' }) };
+    render(<Harness apiClient={apiClient} />);
+
+    fireEvent.click(screen.getByText('sign in'));
+    fireEvent.click(screen.getByText('click CA'));
+
+    expect(updateVisitedPlacesCache).not.toHaveBeenCalled();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('visited').textContent).toBe(JSON.stringify({}))
+    );
+
+    expect(updateVisitedPlacesCache).toHaveBeenCalledTimes(1);
+    expect(updateVisitedPlacesCache).toHaveBeenCalledWith('us-state', {});
+  });
+
+  it(
+    'end-to-end: a saved place under a non-default category is not lost when switching away and back (reproduces the stale-cache bug)',
+    async () => {
+      // Pre-populate useVisitedPlacesLoader's cache for 'canada-state' with
+      // an empty (pre-save) result, matching the bug scenario: the category
+      // was already loaded once before the user clicks a boundary.
+      const loader = renderHook(() =>
+        useVisitedPlacesLoader(
+          { username: 'alice', accessToken: 'tok', expiresAt: Date.now() + 100000 },
+          'canada-state-e2e-cache-bug'
+        )
+      );
+
+      // Manually seed the cache the way a real load would (avoids needing
+      // to mock the API client for this loader too).
+      updateVisitedPlacesCache('canada-state-e2e-cache-bug', {});
+      loader.unmount();
+
+      const apiClient = { saveVisitedState: jest.fn().mockResolvedValue(undefined) };
+
+      function CategorySetter() {
+        const [, setSelectedPlaceCategory] = useSelectedPlaceCategory();
+        React.useEffect(() => {
+          setSelectedPlaceCategory('canada-state-e2e-cache-bug');
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+        return null;
+      }
+      render(<CategorySetter />);
+      render(<Harness apiClient={apiClient} category="canada-state-e2e-cache-bug" />);
+
+      fireEvent.click(screen.getByText('sign in'));
+      fireEvent.click(screen.getByText('click CA'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('pending').textContent).toBe(JSON.stringify({}))
+      );
+      expect(screen.getByTestId('visited').textContent).toBe(JSON.stringify({ CA: true }));
+
+      // Simulate switching away to a different category and back: remount
+      // useVisitedPlacesLoader for the same category, as MapView would do.
+      const fetchSpy = jest.fn();
+      global.fetch = fetchSpy;
+
+      const reMount = renderHook(() =>
+        useVisitedPlacesLoader(
+          { username: 'alice', accessToken: 'tok', expiresAt: Date.now() + 100000 },
+          'canada-state-e2e-cache-bug'
+        )
+      );
+
+      // The just-saved place must still be present -- NOT the stale
+      // pre-save {} that was cached before the click -- and no new fetch
+      // should have been issued (it's served straight from the
+      // now-updated cache).
+      expect(reMount.result.current.status).toBe('ready');
+      expect(reMount.result.current.visitedPlaceIds).toEqual({ CA: true });
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      reMount.unmount();
+      global.fetch = undefined;
+    }
+  );
 });
