@@ -69,13 +69,15 @@ export const CANADA_PROVINCE_BOUNDARIES_GEOJSON_ASSET_PATH = '/data/canadaProvin
  */
 export const COUNTRY_BOUNDARIES_GEOJSON_ASSET_PATH = '/data/countryBoundaries.geojson.json';
 
+// `src/data/stateBoundaries.geojson.json` (51 US states incl. DC),
 // `src/data/canadaProvinceBoundaries.geojson.json` (13 Canadian
-// provinces/territories) and `src/data/countryBoundaries.geojson.json`
-// (180 countries) contain real, simplified/low-resolution boundary data
-// (see design.md's "Boundary data source (resolved)" note for sources and
-// attribution), transformed offline into this module's expected
-// `{properties: {stateId, name}, geometry}` FeatureCollection shape. Each
-// placeCategory fetches its own asset via the routing below.
+// provinces/territories), and `src/data/countryBoundaries.geojson.json`
+// (242 countries) all contain real boundary data sourced from Natural
+// Earth`s 1:50m resolution cultural vectors (see design.md's "Boundary
+// data source (resolved, upgraded)" note for sources and attribution),
+// transformed offline into this module's expected `{properties: {stateId,
+// name}, geometry}` FeatureCollection shape. Each placeCategory fetches
+// its own asset via the routing below.
 /**
  * Resolves the GeoJSON asset path to fetch for a given `placeCategory`.
  *
