@@ -1041,14 +1041,14 @@ describe('MapView - Property 27: exactly one category’s boundaries are ever cu
                 // Re-selecting the already-current category: no remount,
                 // no new fetch, no teardown -- the same polygons remain
                 // live.
-                // eslint-disable-next-line no-await-in-loop
+                 
                 await Promise.resolve();
               } else {
                 if (!everLoadedCategories.has(nextCategory)) {
                   // First time this run selecting nextCategory: its
                   // boundary data isn't cached yet, so a genuine new
                   // fetch is issued.
-                  // eslint-disable-next-line no-await-in-loop
+                   
                   await waitFor(() =>
                     expect(global.fetch.mock.calls.length).toBeGreaterThan(fetchCallCountBeforeSwitch)
                   );
@@ -1059,7 +1059,7 @@ describe('MapView - Property 27: exactly one category’s boundaries are ever cu
                 // previousCategory must now be torn down (whether it was
                 // the "final" one or a transient GoogleMapCanvas-remount
                 // generation, per the livePolygonsFor comment above).
-                // eslint-disable-next-line no-await-in-loop
+                 
                 await waitFor(() => {
                   allInstancesByCategory[previousCategory].forEach((polygon) => {
                     expect(polygon.setMap).toHaveBeenCalledWith(null);
@@ -1071,7 +1071,7 @@ describe('MapView - Property 27: exactly one category’s boundaries are ever cu
                 // livePolygonsFor) so a transient extra generation churned
                 // through and already torn down doesn't inflate this
                 // count.
-                // eslint-disable-next-line no-await-in-loop
+                 
                 await waitFor(() => {
                   const newInstances = polygonConstructor.mock.instances.filter(
                     (instance) => !instancesBeforeSwitch.includes(instance)

@@ -145,9 +145,9 @@ describe('TopNav', () => {
     // after the node passed to compareDocumentPosition -- i.e. `home`
     // precedes `myPlaces`, and `myPlaces` precedes `login`, establishing
     // the exact 3-way left-to-right ordering Requirement 13.1 requires.
-    // eslint-disable-next-line no-bitwise
+     
     expect(homeControl.compareDocumentPosition(myPlacesControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // eslint-disable-next-line no-bitwise
+     
     expect(myPlacesControl.compareDocumentPosition(loginControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     // Also verify via the shared `<nav>` parent's top-level `<ul>` group
@@ -197,9 +197,9 @@ describe('TopNav', () => {
 
     expect(myPlacesControl).toBeInTheDocument();
 
-    // eslint-disable-next-line no-bitwise
+     
     expect(homeControl.compareDocumentPosition(myPlacesControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // eslint-disable-next-line no-bitwise
+     
     expect(myPlacesControl.compareDocumentPosition(logoutControl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     const nav = screen.getByTestId('top-nav');

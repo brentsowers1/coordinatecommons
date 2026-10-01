@@ -432,6 +432,15 @@ describe('handlePlaceBoundaryClick - Property 31', () => {
               placeId,
               !placeIdWasVisitedInA
             );
+            // ...and never tagged with categoryB. The assertion above only
+            // proves categoryA was used for SOME call; this proves no call
+            // was ever made under the other category, which is the half of
+            // the "no cross-category confusion" claim that was previously
+            // only asserted in prose.
+            apiClient.saveVisitedState.mock.calls.forEach((call) => {
+              expect(call[1]).toBe(categoryA);
+              expect(call[1]).not.toBe(categoryB);
+            });
           }
         }
       ),

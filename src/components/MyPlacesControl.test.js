@@ -109,7 +109,7 @@ describe('MyPlacesControl', () => {
   });
 
   it('does not import or read useSession (renders identically regardless of session state)', () => {
-    // eslint-disable-next-line global-require
+     
     const source = require('fs').readFileSync(require.resolve('./MyPlacesControl.jsx'), 'utf8');
     const codeOnly = source
       .split('\n')

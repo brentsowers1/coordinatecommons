@@ -285,7 +285,7 @@ export function useVisitedPlacesLoader(session, placeCategory) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [session, placeCategory, attempt]);
 
   const retry = React.useCallback(() => {

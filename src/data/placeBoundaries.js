@@ -219,7 +219,7 @@ export function usePlaceBoundariesLoader(placeCategory) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [placeCategory, attempt]);
 
   const retry = React.useCallback(() => {
