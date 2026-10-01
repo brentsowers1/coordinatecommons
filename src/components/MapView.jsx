@@ -7,8 +7,27 @@
 // Renders the combined loading/error/retry UI while either the map script
 // or the region data is still loading/failed, and once both loaders are
 // ready, renders `GoogleMapCanvas`, `StateBoundaryOverlay` (once the map
-// instance exists), `PlaceInfoPanel`, and `PlaceVisitStatusLists` as siblings
-// inside the `data-testid="map-view"` wrapper.
+// instance exists), `PlaceInfoPanel`, `LoginPromptBanner`, and
+// `PlaceVisitStatusLists` as siblings inside the `data-testid="map-view"`
+// wrapper.
+//
+// LoginPromptBanner placement (Requirement 9.2): the banner belongs "in an
+// area below the Map_View", so `MapView` -- not `MapPage` -- owns where it
+// goes. It is rendered immediately after `PlaceInfoPanel` and BEFORE
+// `PlaceVisitStatusLists`, because `PlaceVisitStatusLists` renders two long
+// columns (one entry per place -- hundreds for the 'country' category);
+// anything after it lands at the very bottom of the page rather than in the
+// area just below the map. It is also rendered in the loading and error
+// branches so an unauthenticated user sees the prompt persistently in every
+// map state, not just the ready one. `LoginPromptBanner` self-gates on
+// `useSession` (returning null when there is a session, Requirement 9.3), so
+// no conditional logic is needed here.
+//
+// `onRequestLogin`/`onRequestSignUp` (Requirement 9.2): forwarded, unused
+// otherwise, to `LoginPromptBanner` in all three branches below, so its
+// "Log in" / "sign up for an account" links can reach `AuthGate`'s
+// navigation (AuthGate -> MapPage -> MapView -> banner). `MapView` has no
+// navigation concept of its own; this is a pure pass-through.
 
 import React from 'react';
 import { useGoogleMapsLoader } from './useGoogleMapsLoader';
@@ -17,6 +36,7 @@ import { GoogleMapCanvas } from './GoogleMapCanvas';
 import { StateBoundaryOverlay } from './StateBoundaryOverlay';
 import { PlaceInfoPanel } from './PlaceInfoPanel';
 import { PlaceVisitStatusLists } from './PlaceVisitStatusLists';
+import { LoginPromptBanner } from './LoginPromptBanner';
 import { useStateBoundaryClickHandler } from '../state/useStateBoundaryClickHandler';
 import {
   useSession,
@@ -53,7 +73,14 @@ function combineLoaderStatuses(mapScriptStatus, boundaryDataStatus) {
   };
 }
 
-export function MapView() {
+/**
+ * @param {Object} props
+ * @param {() => void} [props.onRequestLogin] - forwarded to
+ *   `LoginPromptBanner`'s "Log in" link (Requirement 9.2).
+ * @param {() => void} [props.onRequestSignUp] - forwarded to
+ *   `LoginPromptBanner`'s "sign up for an account" link (Requirement 9.2).
+ */
+export function MapView({ onRequestLogin, onRequestSignUp } = {}) {
   const mapScriptLoader = useGoogleMapsLoader();
 
   // Task 29.1 (Requirements 14.1, 15.3): render only the Selected_Place_Category's
@@ -146,27 +173,39 @@ export function MapView() {
         : 'The region data failed to load.';
 
     return (
-      <div role="alert" data-testid="map-view-error">
-        <p>{failureDescription}</p>
-        {mapScriptLoader.status === 'error' ? (
-          <button type="button" onClick={mapScriptLoader.retry}>
-            Retry loading map
-          </button>
-        ) : null}
-        {regionsLoader.status === 'error' ? (
-          <button type="button" onClick={regionsLoader.retry}>
-            Retry loading region data
-          </button>
-        ) : null}
-      </div>
+      <>
+        <div role="alert" data-testid="map-view-error">
+          <p>{failureDescription}</p>
+          {mapScriptLoader.status === 'error' ? (
+            <button type="button" onClick={mapScriptLoader.retry}>
+              Retry loading map
+            </button>
+          ) : null}
+          {regionsLoader.status === 'error' ? (
+            <button type="button" onClick={regionsLoader.retry}>
+              Retry loading region data
+            </button>
+          ) : null}
+        </div>
+        <LoginPromptBanner
+          onRequestLogin={onRequestLogin}
+          onRequestSignUp={onRequestSignUp}
+        />
+      </>
     );
   }
 
   if (isLoading || !isReady) {
     return (
-      <div role="status" data-testid="map-view-loading">
-        Loading map&hellip;
-      </div>
+      <>
+        <div role="status" data-testid="map-view-loading">
+          Loading map&hellip;
+        </div>
+        <LoginPromptBanner
+          onRequestLogin={onRequestLogin}
+          onRequestSignUp={onRequestSignUp}
+        />
+      </>
     );
   }
 
@@ -182,6 +221,13 @@ export function MapView() {
         />
       ) : null}
       <PlaceInfoPanel regions={regionsLoader.placeBoundaries} />
+      {/* Requirement 9.2: directly below the map, ABOVE the long
+          Place_Visit_Status_Lists columns -- see the placement note atop
+          this module. */}
+      <LoginPromptBanner
+        onRequestLogin={onRequestLogin}
+        onRequestSignUp={onRequestSignUp}
+      />
       <PlaceVisitStatusLists regions={regionsLoader.placeBoundaries} />
       {/* Requirement 4.4/4.5: a failed visited-states load never blocks the
           map/overlay from rendering (they're already visible above); this

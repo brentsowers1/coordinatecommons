@@ -35,12 +35,17 @@
 //   - `currentPage === 'login'`: render LoginPage. Reachable from TopNav's
 //     "Log in" control invoking `onRequestLogin` (passed down as
 //     `() => setCurrentPage('login')`), i.e. only from a deliberate user
-//     action (Requirement 1.2), and from LoginPage itself being the
-//     destination Sign_Up_Page returns to on successful confirmation (see
-//     below).
-//   - `currentPage === 'signup'`: render SignUpPage. Only reachable by
+//     action (Requirement 1.2), from the unauthenticated LoginPromptBanner's
+//     "Log in" link (Requirement 9.2 -- the same `onRequestLogin`
+//     transition, forwarded through MapPage/MapView; see below), and from
+//     LoginPage itself being the destination Sign_Up_Page returns to on
+//     successful confirmation (see below).
+//   - `currentPage === 'signup'`: render SignUpPage. Reachable by
 //     LoginPage's "Sign up" link invoking `onRequestSignUp` (passed down
-//     as `() => setCurrentPage('signup')`), per Requirement 12.1/12.2.
+//     as `() => setCurrentPage('signup')`), per Requirement 12.1/12.2, and
+//     by the unauthenticated LoginPromptBanner's "sign up for an account"
+//     link (Requirement 9.2), which is wired to that same transition
+//     forwarded through MapPage/MapView.
 //   - Once `useSession` becomes non-null (a successful login --
 //     LoginPage.js's own module comment describes "navigates back to
 //     Map_View on success" as being AuthGate's responsibility, not
@@ -179,7 +184,17 @@ export function AuthGate() {
   } else if (currentPage === 'signup') {
     page = <SignUpPage onSignUpComplete={handleSignUpComplete} />;
   } else {
-    page = <MapPage />;
+    // The two callbacks are forwarded straight through MapPage -> MapView
+    // to LoginPromptBanner's "Log in" / "sign up for an account" links
+    // (Requirement 9.2) -- deliberately the SAME transitions already used
+    // by TopNav's login control and LoginPage's sign-up link above, since
+    // both just mean "show Login_Page" / "show Sign_Up_Page".
+    page = (
+      <MapPage
+        onRequestLogin={() => setCurrentPage('login')}
+        onRequestSignUp={() => setCurrentPage('signup')}
+      />
+    );
   }
 
   return (

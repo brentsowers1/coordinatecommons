@@ -42,7 +42,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MapView } from './MapView';
 import { useGoogleMapsLoader, GOOGLE_MAPS_SCRIPT_ID } from './useGoogleMapsLoader';
 import { usePlaceBoundariesLoader } from '../data/placeBoundaries';
-import { useSelectedPlaceCategory, useInfoPanelPlaceId } from '../state/sharedState';
+import { useSelectedPlaceCategory, useInfoPanelPlaceId, useSession } from '../state/sharedState';
 
 function resetGoogleMapsLoaderSingleton() {
   function ResetHarness() {
@@ -114,7 +114,26 @@ function resetInfoPanelPlaceIdSingleton() {
   unmount();
 }
 
+// useSession is module-scoped shared state too (and MapView now renders
+// LoginPromptBanner, which reads it) -- reset it to its default (null, i.e.
+// an unauthenticated guest) before each test, and provide a setter helper
+// for the tests that need an authenticated session.
+function setSessionTo(session) {
+  function Harness() {
+    const [, setSession] = useSession();
+    React.useEffect(() => {
+      setSession(session);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return null;
+  }
+
+  const { unmount } = render(<Harness />);
+  unmount();
+}
+
 beforeEach(() => {
+  setSessionTo(null);
   resetGoogleMapsLoaderSingleton();
   resetPlaceBoundariesLoaderSingleton('us-state');
   resetPlaceBoundariesLoaderSingleton('canada-state');
@@ -124,6 +143,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  setSessionTo(null);
   delete window.google;
   global.fetch = undefined;
   document.querySelectorAll(`#${GOOGLE_MAPS_SCRIPT_ID}`).forEach((scriptTag) => scriptTag.remove());
@@ -144,7 +164,10 @@ describe('MapView - loading UI', () => {
 
     render(<MapView />);
 
-    expect(screen.getByRole('status')).toHaveTextContent(/Loading map/i);
+    // Queried by test id rather than by `role="status"`: for a guest,
+    // `LoginPromptBanner` (also `role="status"`) is rendered alongside the
+    // loading indicator (Requirement 9.2), so the role alone is ambiguous.
+    expect(screen.getByTestId('map-view-loading')).toHaveTextContent(/Loading map/i);
   });
 });
 
@@ -167,7 +190,9 @@ describe('MapView - combined loading indicator clears only when both sources are
 
     render(<MapView />);
 
-    expect(screen.getByRole('status')).toHaveTextContent(/Loading map/i);
+    // Queried by test id, not by `role="status"` -- see the note in the
+    // loading-UI test above (the guest login-prompt banner shares that role).
+    expect(screen.getByTestId('map-view-loading')).toHaveTextContent(/Loading map/i);
 
     const scriptTag = getMapScriptTag();
 
@@ -177,7 +202,7 @@ describe('MapView - combined loading indicator clears only when both sources are
 
     // Map script is now 'ready', but the region fetch is still pending --
     // the combined loading indicator must still be shown.
-    expect(screen.getByRole('status')).toHaveTextContent(/Loading map/i);
+    expect(screen.getByTestId('map-view-loading')).toHaveTextContent(/Loading map/i);
     expect(screen.queryByTestId('google-map-canvas')).toBeNull();
 
     await act(async () => {
@@ -189,7 +214,7 @@ describe('MapView - combined loading indicator clears only when both sources are
     });
 
     await waitFor(() => expect(screen.getByTestId('google-map-canvas')).toBeInTheDocument());
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByTestId('map-view-loading')).toBeNull();
   });
 });
 
@@ -425,7 +450,7 @@ describe('MapView - smoke test: real Maps API objects constructed (task 12.6)', 
     // Both loaders ready: the loading indicator is gone and the map canvas
     // (and, transitively, the region overlay) has mounted.
     await waitFor(() => expect(screen.getByTestId('google-map-canvas')).toBeInTheDocument());
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByTestId('map-view-loading')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
 
     // A map was actually constructed, not just that loading UI cleared.
@@ -1094,4 +1119,203 @@ describe('MapView - Property 27: exactly one category’s boundaries are ever cu
     },
     60000
   );
+});
+
+describe('MapView - LoginPromptBanner placement (Requirement 9.2/9.3)', () => {
+  // Regression tests for the banner's position. It used to be rendered by
+  // `MapPage` as a sibling AFTER `MapView`, which put it after
+  // PlaceVisitStatusLists' two long columns (one entry per place -- hundreds
+  // for the 'country' category) and therefore at the very bottom of the
+  // page, not "in an area below the Map_View" (Requirement 9.2). MapView now
+  // owns the placement: directly after PlaceInfoPanel and BEFORE
+  // PlaceVisitStatusLists, and in its loading/error branches too so the
+  // prompt is persistent in every map state while unauthenticated.
+
+  const REGIONS_FIXTURE = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: { stateId: 'CA', name: 'California' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-10, -10],
+              [10, -10],
+              [10, 10],
+              [-10, 10],
+              [-10, -10],
+            ],
+          ],
+        },
+      },
+    ],
+  };
+
+  function setUpMapsStub() {
+    window.google = {
+      maps: {
+        Map: jest.fn().mockImplementation(function Map(element, options) {
+          this.element = element;
+          this.options = options;
+          this.addListener = jest.fn(() => ({ remove: jest.fn() }));
+        }),
+        Polygon: jest.fn().mockImplementation(function Polygon(options) {
+          this.options = options;
+          this.setMap = jest.fn();
+          this.setOptions = jest.fn();
+        }),
+        importLibrary: jest.fn().mockResolvedValue({}),
+      },
+    };
+  }
+
+  async function renderReadyMapView() {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(REGIONS_FIXTURE),
+    });
+    setUpMapsStub();
+
+    render(<MapView />);
+
+    const scriptTag = getMapScriptTag();
+    act(() => {
+      scriptTag.onload();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('google-map-canvas')).toBeInTheDocument());
+  }
+
+  /**
+   * True when `earlier` precedes `later` in document order.
+   */
+  function precedes(earlier, later) {
+    return Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }
+
+  it('renders the banner between the info panel and the visit-status lists in DOM order, for an unauthenticated session in the ready state', async () => {
+    await renderReadyMapView();
+
+    const banner = screen.getByTestId('login-prompt-banner');
+    const infoPanel = screen.getByTestId('state-info-panel');
+    const lists = screen.getByTestId('visited-states-lists');
+
+    expect(banner).toBeInTheDocument();
+
+    // The actual bug: the banner came AFTER the long visit-status lists.
+    expect(precedes(banner, lists)).toBe(true);
+    expect(precedes(infoPanel, banner)).toBe(true);
+
+    // And it is inside MapView's own wrapper, between those two siblings.
+    const mapViewChildren = Array.from(screen.getByTestId('map-view').children);
+    expect(mapViewChildren.indexOf(banner)).toBeGreaterThan(mapViewChildren.indexOf(infoPanel));
+    expect(mapViewChildren.indexOf(banner)).toBeLessThan(mapViewChildren.indexOf(lists));
+  });
+
+  it('renders the banner in the loading state for an unauthenticated session', () => {
+    // Never resolves, so the region loader stays 'loading' and the map
+    // script's onload never fires on its own in jsdom.
+    global.fetch = jest.fn(() => new Promise(() => {}));
+
+    render(<MapView />);
+
+    expect(screen.getByTestId('map-view-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('login-prompt-banner')).toBeInTheDocument();
+  });
+
+  it('renders the banner in the error state for an unauthenticated session', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('network down'));
+
+    render(<MapView />);
+
+    const scriptTag = getMapScriptTag();
+    act(() => {
+      scriptTag.onerror();
+    });
+
+    await screen.findByTestId('map-view-error');
+    expect(screen.getByTestId('login-prompt-banner')).toBeInTheDocument();
+  });
+
+  it('renders no banner for an authenticated session (Requirement 9.3)', async () => {
+    setSessionTo({ username: 'alice', accessToken: 'token', expiresAt: Date.now() + 100000 });
+
+    await renderReadyMapView();
+
+    expect(screen.queryByTestId('login-prompt-banner')).toBeNull();
+  });
+
+  // Requirement 9.2: MapView owns the banner's placement, so it is also
+  // what has to forward AuthGate's navigation callbacks down to it (see
+  // MapView.jsx's note). MapView itself does nothing with them.
+  describe('banner navigation callbacks are forwarded (Requirement 9.2)', () => {
+    async function renderReadyMapViewWithCallbacks(props) {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(REGIONS_FIXTURE),
+      });
+      setUpMapsStub();
+
+      render(<MapView {...props} />);
+
+      const scriptTag = getMapScriptTag();
+      act(() => {
+        scriptTag.onload();
+      });
+
+      await waitFor(() => expect(screen.getByTestId('google-map-canvas')).toBeInTheDocument());
+    }
+
+    it('renders both banner links in the ready state and invokes the callbacks it was given', async () => {
+      const onRequestLogin = jest.fn();
+      const onRequestSignUp = jest.fn();
+
+      await renderReadyMapViewWithCallbacks({ onRequestLogin, onRequestSignUp });
+
+      fireEvent.click(screen.getByTestId('login-prompt-login-link'));
+      expect(onRequestLogin).toHaveBeenCalledTimes(1);
+      expect(onRequestSignUp).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByTestId('login-prompt-signup-link'));
+      expect(onRequestSignUp).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards the callbacks in the loading state too', () => {
+      const onRequestLogin = jest.fn();
+      const onRequestSignUp = jest.fn();
+      // Never resolves, so the region loader stays 'loading'.
+      global.fetch = jest.fn(() => new Promise(() => {}));
+
+      render(<MapView onRequestLogin={onRequestLogin} onRequestSignUp={onRequestSignUp} />);
+
+      fireEvent.click(screen.getByTestId('login-prompt-login-link'));
+      fireEvent.click(screen.getByTestId('login-prompt-signup-link'));
+
+      expect(onRequestLogin).toHaveBeenCalledTimes(1);
+      expect(onRequestSignUp).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards the callbacks in the error state too', async () => {
+      const onRequestLogin = jest.fn();
+      const onRequestSignUp = jest.fn();
+      global.fetch = jest.fn().mockRejectedValue(new Error('network down'));
+
+      render(<MapView onRequestLogin={onRequestLogin} onRequestSignUp={onRequestSignUp} />);
+
+      const scriptTag = getMapScriptTag();
+      act(() => {
+        scriptTag.onerror();
+      });
+
+      await screen.findByTestId('map-view-error');
+
+      fireEvent.click(screen.getByTestId('login-prompt-login-link'));
+      fireEvent.click(screen.getByTestId('login-prompt-signup-link'));
+
+      expect(onRequestLogin).toHaveBeenCalledTimes(1);
+      expect(onRequestSignUp).toHaveBeenCalledTimes(1);
+    });
+  });
 });

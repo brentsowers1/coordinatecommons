@@ -37,10 +37,10 @@ graph TD
     AuthGate --> SignUpPage
     TopNav --> MyPlacesControl
     MapPage --> MapView
-    MapPage --> LoginPromptBanner
     MapView --> GoogleMapCanvas
     MapView --> PlaceBoundaryOverlay
     MapView --> PlaceInfoPanel
+    MapView --> LoginPromptBanner
     MapView --> PlaceVisitStatusLists
     GoogleMapCanvas -. "creates map instance" .-> PlaceBoundaryOverlay
     LoginPage --> LoginForm
@@ -52,8 +52,8 @@ graph TD
 - **AuthGate**: Reads the shared `useSession` hook and chooses between `MapPage` (default, per Requirement 1.1), `LoginPage`, and `SignUpPage`, via a local `currentPage` enum (`'map' | 'login' | 'signup'`, generalizing the boolean this state used to be now that there are three top-level pages instead of two — see AuthGate.jsx's own module comment for the full navigation-state rationale); renders `TopNav` above whichever page is showing, so navigation is visible on every page.
 - **TopNav**: Always-visible top navigation. Provides a home control that returns to `MapPage`, the `MyPlacesControl` (Requirement 13.1), a "Log in" control when there is no session (per Requirement 1.1/1.2), and a "Log out" control when there is a session (invoking the logout handler per Requirement 2.1). Control order left-to-right (DOM order): home control, `MyPlacesControl`, login/logout control (Requirement 13.1); visually, `MyPlacesControl` and the login/logout control are grouped together on the right side of the nav, with the home control on the left.
 - **MyPlacesControl**: Reads and writes `useSelectedPlaceCategory`. Renders the fixed label "My Places" as its closed-state button text, and an open dropdown with exactly three options — "US States", "Canadian Provinces", "Countries" — mapping 1:1 to `us-state` / `canada-state` / `country` (Requirement 13.2-13.4), rendered as an absolutely-positioned overlay below the control rather than in normal document flow.
-- **MapPage**: Composes `MapView` and, for unauthenticated sessions, `LoginPromptBanner` (Requirement 9.2/9.3).
-- **MapView**: Reads `useSelectedPlaceCategory` and owns, per the currently Selected_Place_Category, the Google Maps lifecycle (loading, error, retry) and the boundary/visited-place loading lifecycle; renders `GoogleMapCanvas`, `PlaceBoundaryOverlay`, `PlaceInfoPanel`.
+- **MapPage**: Composes `MapView`.
+- **MapView**: Reads `useSelectedPlaceCategory` and owns, per the currently Selected_Place_Category, the Google Maps lifecycle (loading, error, retry) and the boundary/visited-place loading lifecycle; renders `GoogleMapCanvas`, `PlaceBoundaryOverlay`, `PlaceInfoPanel`, and — in the area below the map, after `PlaceInfoPanel` and above `PlaceVisitStatusLists` — `LoginPromptBanner`, in all of its loading/error/ready states so the prompt is persistent while unauthenticated (Requirement 9.2/9.3). (This placement was corrected: rendering `LoginPromptBanner` as a `MapPage`-level sibling of `MapView` put it after `PlaceVisitStatusLists`' long columns, i.e. at the page bottom rather than below the map.)
 - **PlaceBoundaryOverlay**: Draws the Selected_Place_Category's Place_Boundary polygons on the map and colors them from that category's slice of `useVisitedPlaceIdsByCategory` (Requirement 6, 15.3).
 - **PlaceInfoPanel**: Fixed-position panel below the map (Requirement 10, 15.4). Requirement 10's vocabulary calls this the `State_Info_Panel` for the US-states case; see the Overview's terminology note.
 - **PlaceVisitStatusLists**: Two side-by-side lists below the map, showing visited (left) and not-visited (right) Place_Boundary names for the Selected_Place_Category, partitioned via `partitionPlaceBoundariesByVisited` (Requirement 11, 15.5).
@@ -417,7 +417,9 @@ Like `PlaceInfoPanel`, this component does not read `useSession`, so it is avail
 
 ### LoginPromptBanner
 
-Rendered by `MapPage` below `MapView` whenever `useSession` is `null` (9.2), never when it is non-null (9.3). Additionally distinguishes *why* the user is signed out when the transition to `null` was caused by expiration or an auth error, versus manual logout, by reading a short-lived `signOutReason` value (`'LOGOUT' | 'SESSION_ENDED'`) set alongside the session clear (2.4). Rendered the same way regardless of the Selected_Place_Category (Requirement 15.8).
+Rendered by `MapView` in the area below the map (after `PlaceInfoPanel`, above `PlaceVisitStatusLists`), in all of `MapView`'s loading/error/ready states, whenever `useSession` is `null` (9.2), never when it is non-null (9.3). Additionally distinguishes *why* the user is signed out when the transition to `null` was caused by expiration or an auth error, versus manual logout, by reading a short-lived `signOutReason` value (`'LOGOUT' | 'SESSION_ENDED'`) set alongside the session clear (2.4). Rendered the same way regardless of the Selected_Place_Category (Requirement 15.8).
+
+The neutral (non-`SESSION_ENDED`) message renders "Log in" and "sign up for an account" as links (9.2), using the same `<a href="#">` + `preventDefault()` link-styled-action pattern as `TopNav`/`LoginPage`. The banner has no navigation concept of its own: the links call `onRequestLogin`/`onRequestSignUp` callback props forwarded `AuthGate` → `MapPage` → `MapView` → `LoginPromptBanner` (MapPage and MapView are pure pass-throughs; the banner's placement lives in `MapView`), wired to `AuthGate`'s existing `currentPage` transitions to `'login'` and `'signup'`. The `SESSION_ENDED` message remains plain text with no links (2.4 unchanged).
 
 ### Place Category Data Loading (`useVisitedPlacesLoader`, per-category caching, stale-request discard)
 

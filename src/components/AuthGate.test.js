@@ -20,9 +20,26 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 
 import { useSession } from '../state/sharedState';
 
-jest.mock('./MapPage', () => ({
-  MapPage: () => <div data-testid="mock-map-page" />,
-}));
+// The MapPage mock renders the REAL `LoginPromptBanner` with whatever
+// navigation callbacks AuthGate passes it, standing in for the
+// MapPage -> MapView -> banner nesting (whose own forwarding is covered by
+// MapPage.test.js/MapView.test.js). That keeps the heavy Maps
+// loader/region-fetch out of this file while still exercising the real
+// user-facing navigation added by Requirement 9.2: clicking the banner's
+// links from the map page shows Login_Page / Sign_Up_Page.
+jest.mock('./MapPage', () => {
+  const { LoginPromptBanner } = require('./LoginPromptBanner');
+  return {
+    MapPage: ({ onRequestLogin, onRequestSignUp }) => (
+      <div data-testid="mock-map-page">
+        <LoginPromptBanner
+          onRequestLogin={onRequestLogin}
+          onRequestSignUp={onRequestSignUp}
+        />
+      </div>
+    ),
+  };
+});
 jest.mock('./LoginPage', () => ({
   LoginPage: ({ onRequestSignUp, successMessage }) => (
     <div data-testid="mock-login-page">
@@ -189,6 +206,32 @@ describe('AuthGate', () => {
     expect(screen.getByTestId('mock-login-success-message')).toHaveTextContent(
       'some test message'
     );
+  });
+
+  it('navigates from the unauthenticated map page to Login_Page via the login-prompt banner\'s "Log in" link (Requirement 9.2)', () => {
+    render(<AuthGate />);
+
+    // Starting point: unauthenticated, on the map page, banner showing.
+    expect(screen.getByTestId('mock-map-page')).toBeInTheDocument();
+    expect(screen.getByTestId('login-prompt-banner')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('login-prompt-login-link'));
+
+    expect(screen.getByTestId('mock-login-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('mock-map-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mock-signup-page')).not.toBeInTheDocument();
+  });
+
+  it('navigates from the unauthenticated map page to Sign_Up_Page via the login-prompt banner\'s "sign up for an account" link (Requirement 9.2)', () => {
+    render(<AuthGate />);
+
+    expect(screen.getByTestId('mock-map-page')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('login-prompt-signup-link'));
+
+    expect(screen.getByTestId('mock-signup-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('mock-map-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mock-login-page')).not.toBeInTheDocument();
   });
 
   it('clears the sign-up success message once a subsequent login succeeds', () => {

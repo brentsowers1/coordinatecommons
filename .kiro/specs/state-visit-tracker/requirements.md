@@ -146,7 +146,7 @@ In addition to US states, Coordinate_Commons lets a user track visited Canadian 
 #### Acceptance Criteria
 
 1. WHILE a user is not authenticated, THE Coordinate_Commons SHALL allow that user to view the Map_View and click State_Boundary elements to mark or unmark them as visited, per Requirement 5.
-2. WHILE a user is not authenticated, THE Coordinate_Commons SHALL display, in an area below the Map_View, a persistent message indicating that the user must log in to save their visited states.
+2. WHILE a user is not authenticated, THE Coordinate_Commons SHALL display, in an area below the Map_View, a persistent message indicating that the user must log in to save their visited states, and that message SHALL include a control that displays the Login_Page and a control that displays the Sign_Up_Page.
 3. WHILE a user is authenticated, THE Coordinate_Commons SHALL NOT display the login-prompt message described in criterion 2.
 4. WHEN an unauthenticated user marks or unmarks a State_Boundary as visited, THE Map_View SHALL update the rendered fill color of that State_Boundary per Requirement 6, without persisting the change to the Visit_Record_API.
 
